@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.form-sheet, .form-sheet *)));
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORM-SHEET — Isolasi lembar inspeksi dari pengaruh Dark Mode.
+   Semua elemen di dalam .form-sheet SELALU tampil seperti kertas
+   putih, tidak terpengaruh class .dark yang ada di luar.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wrapper utama lembar form */
+.form-sheet,
+.dark .form-sheet {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Teks & label di dalam lembar */
+.form-sheet h1, .form-sheet h2, .form-sheet h3, .form-sheet h4,
+.form-sheet p, .form-sheet span, .form-sheet label,
+.dark .form-sheet h1, .dark .form-sheet h2, .dark .form-sheet h3, .dark .form-sheet h4,
+.dark .form-sheet p, .dark .form-sheet span, .dark .form-sheet label {
+  color: #0f172a;
+}
+
+/* Sel tabel */
+.form-sheet th, .form-sheet td,
+.dark .form-sheet th, .dark .form-sheet td {
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Header tabel (thead) */
+.form-sheet thead th,
+.dark .form-sheet thead th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Background baris tabel */
+.form-sheet tr,
+.dark .form-sheet tr {
+  background-color: #ffffff !important;
+}
+.form-sheet tr:nth-child(even),
+.dark .form-sheet tr:nth-child(even) {
+  background-color: #f8fafc !important;
+}
+
+/* Semua input / select / textarea */
+.form-sheet input, .form-sheet select, .form-sheet textarea,
+.dark .form-sheet input, .dark .form-sheet select, .dark .form-sheet textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Input read-only / disabled (kolom non-aktif, kolom N/A) */
+.form-sheet input:read-only, .form-sheet input:disabled,
+.form-sheet select:disabled, .form-sheet textarea:read-only,
+.dark .form-sheet input:read-only, .dark .form-sheet input:disabled,
+.dark .form-sheet select:disabled, .dark .form-sheet textarea:read-only {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+/* Placeholder teks */
+.form-sheet input::placeholder, .form-sheet textarea::placeholder,
+.dark .form-sheet input::placeholder, .dark .form-sheet textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Sel kolom N/A / kosong / non-aktif — pakai class .cell-na */
+.form-sheet .cell-na, .dark .form-sheet .cell-na {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+/* ─── PDF export utility classes ──────────────────────── */
+@layer utilities {
+  .pdf-header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .pdf-header-table td { border: 2px solid #0f172a; padding: 6px 10px; vertical-align: middle; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .data-table th, .data-table td { border: 1px solid #1e293b; padding: 5px; text-align: center; vertical-align: middle; }
+  .data-table th { background-color: #f1f5f9; font-weight: bold; color: #0f172a; }
+  .text-left-col { text-align: left !important; padding-left: 8px !important; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+  main { overflow: visible !important; height: auto !important; }
+}
