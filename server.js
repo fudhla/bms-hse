@@ -394,28 +394,9 @@ app.post('/api/login', async (req, res) => {
         message: 'Akun Rig ini telah diarsipkan dan tidak dapat digunakan untuk login. Riwayat laporan tetap tersimpan aman.'
       });
     }
-    let isPasswordValid = false;
-
-    // Cek apakah password tersimpan dalam format hash bcrypt ($2a$ atau $2b$)
-    const isBcryptHash = user.password && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$'));
-
-    if (isBcryptHash) {
-      isPasswordValid = await bcrypt.compare(trimmedPass, user.password);
-    } else {
-      // Legacy plaintext password check
-      isPasswordValid = (user.password === trimmedPass);
-
-      // Auto-upgrade password ke hash bcrypt secara transparan
-      if (isPasswordValid) {
-        try {
-          const hashedPassword = await bcrypt.hash(trimmedPass, 10);
-          await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
-          console.log(`[Security] Password akun ${user.username} berhasil di-upgrade ke bcrypt hash.`);
-        } catch (upgradeErr) {
-          console.warn('[Security] Gagal auto-upgrade password:', upgradeErr.message);
-        }
-      }
-    }
+    // Komparasi string password langsung (Plain Text)
+    const isPasswordValid = (user.password === trimmedPass) ||
+      (user.password && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) ? await bcrypt.compare(trimmedPass, user.password) : false);
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -512,15 +493,8 @@ app.get('/api/users', requireAdmin, async (req, res) => {
       ORDER BY id ASC
     `);
 
-    // Mask bcrypt hash untuk kenyamanan tampilan tabel Admin
-    const safeRows = rows.map(u => ({
-      ...u,
-      password: (u.password && (u.password.startsWith('$2a$') || u.password.startsWith('$2b$')))
-        ? '•••••••• (Bcrypt)'
-        : u.password
-    }));
-
-    res.json({ success: true, data: safeRows });
+    // Kembalikan data user langsung dengan password plain text
+    res.json({ success: true, data: rows });
   } catch (err) {
     console.error('Error fetching users:', err);
     res.status(500).json({ success: false, message: 'Gagal mengambil data akun: ' + err.message });
@@ -555,14 +529,12 @@ app.get('/api/rigs', async (req, res) => {
     query += ` ORDER BY id ASC`;
     const [rows] = await pool.query(query, params);
 
-    // Masking hash password bcrypt untuk keamanan UI
+    // Kembalikan password apa adanya (Plain Text) tanpa masking (Bcrypt)
     const safeRows = rows.map(u => ({
       ...u,
       status: u.status || 'active',
       is_archived: u.is_archived ? 1 : 0,
-      password: (u.password && (u.password.startsWith('$2a$') || u.password.startsWith('$2b$')))
-        ? '•••••••• (Bcrypt)'
-        : u.password
+      password: u.password || ''
     }));
 
     res.json({ success: true, data: safeRows });
@@ -604,12 +576,12 @@ app.post('/api/rigs', async (req, res) => {
       return res.status(400).json({ success: false, message: `Rig "${cleanRigName}" sudah terdaftar di sistem!` });
     }
 
-    const hashedPassword = await bcrypt.hash(cleanPassword, 10);
     const displayName = cleanRigName.startsWith('RIG ') ? cleanRigName : `Rig ${cleanRigName}`;
 
+    // Simpan password plain text apa adanya tanpa enkripsi bcrypt
     const [result] = await pool.query(
       'INSERT INTO users (username, password, name, role, status, rig_name) VALUES (?, ?, ?, ?, ?, ?)',
-      [cleanUsername, hashedPassword, displayName, 'karyawan', 'active', cleanRigName]
+      [cleanUsername, cleanPassword, displayName, 'karyawan', 'active', cleanRigName]
     );
 
     return res.status(201).json({
@@ -641,9 +613,9 @@ app.put('/api/rigs/:id/password', async (req, res) => {
     }
 
     const trimmed = String(newPassword).trim();
-    const hashedPassword = await bcrypt.hash(trimmed, 10);
 
-    const [result] = await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+    // Simpan password baru langsung dalam bentuk Plain Text tanpa enkripsi bcrypt
+    const [result] = await pool.query('UPDATE users SET password = ? WHERE id = ?', [trimmed, id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Akun rig tidak ditemukan di database.' });
     }
@@ -855,12 +827,12 @@ app.put('/api/admin/reset-password', requireAdmin, async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(trimmedPass, 10);
-    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, targetUser.id]);
+    // Simpan password langsung dalam bentuk Plain Text tanpa enkripsi bcrypt
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [trimmedPass, targetUser.id]);
 
     return res.json({
       success: true,
-      message: `Password akun ${targetUser.rig_name || targetUser.username} berhasil diperbarui dan diamankan dengan bcrypt!`,
+      message: `Password akun ${targetUser.rig_name || targetUser.username} berhasil diperbarui!`,
       userId: targetUser.id,
       username: targetUser.username
     });
@@ -888,12 +860,12 @@ app.put('/api/users/:id/password', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Akun tidak ditemukan.' });
     }
 
-    const hashedPassword = await bcrypt.hash(trimmedPass, 10);
-    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, id]);
+    // Simpan password langsung dalam bentuk Plain Text tanpa enkripsi bcrypt
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [trimmedPass, id]);
 
     return res.json({
       success: true,
-      message: `Password akun ${rows[0].rig_name || rows[0].username} berhasil diperbarui dan diamankan dengan bcrypt!`,
+      message: `Password akun ${rows[0].rig_name || rows[0].username} berhasil diperbarui!`,
       userId: rows[0].id,
       username: rows[0].username
     });
@@ -943,8 +915,8 @@ app.put('/api/admin/profile', async (req, res) => {
         return res.status(401).json({ success: false, message: 'Kata sandi lama yang Anda masukkan salah!' });
       }
 
-      const hashedNew = await bcrypt.hash(trimmedNew, 10);
-      await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedNew, admin.id]);
+      // Simpan password admin langsung dalam format Plain Text
+      await pool.query('UPDATE users SET password = ? WHERE id = ?', [trimmedNew, admin.id]);
     }
 
     // Perbarui nama tampilan jika diisi

@@ -87,6 +87,17 @@ export default function ManageRigPage() {
   const [isPermanentlyDeleting, setIsPermanentlyDeleting] = useState(false);
   const [permanentDeleteError, setPermanentDeleteError] = useState('');
 
+  // ── Password Visibility di Tabel ──
+  const [showAllPasswords, setShowAllPasswords] = useState(false);
+  const [showPasswordMap, setShowPasswordMap] = useState({});
+
+  const toggleRowPassword = (id) => {
+    setShowPasswordMap(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   // ── Helper Toast ──
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -188,10 +199,13 @@ export default function ManageRigPage() {
   // ── 3. UPDATE: Edit Password Rig ──
   const handleOpenPasswordModal = (account) => {
     setSelectedUser(account);
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
+    const currentPass = account?.password && !account.password.includes('Bcrypt') && !account.password.startsWith('$2')
+      ? account.password
+      : (account?.password || '');
+    setNewPassword(currentPass);
+    setConfirmPassword(currentPass);
+    setShowPassword(true);
+    setShowConfirmPassword(true);
     setModalError('');
   };
 
@@ -230,7 +244,7 @@ export default function ManageRigPage() {
 
       setRigs(prev => prev.map(acc => {
         if (acc.id === selectedUser.id) {
-          return { ...acc, password: '•••••••• (Bcrypt)' };
+          return { ...acc, password: newPassword.trim() };
         }
         return acc;
       }));
@@ -763,7 +777,19 @@ export default function ManageRigPage() {
                 <th className="text-left px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Nama Rig</th>
                 <th className="text-left px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Username Login</th>
                 <th className="text-left px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Password</th>
+                <th className="text-left px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1.5">
+                    <span>Password</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllPasswords(!showAllPasswords)}
+                      className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-blue-600 dark:hover:text-cyan-400 transition cursor-pointer"
+                      title={showAllPasswords ? "Sembunyikan semua password" : "Tampilkan semua password (Plain Text)"}
+                    >
+                      {showAllPasswords ? <EyeOff className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </th>
                 <th className="text-center px-4 py-3 font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">Aksi Kelola</th>
               </tr>
             </thead>
@@ -835,10 +861,26 @@ export default function ManageRigPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">
-                        <span className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-fit border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg w-fit border border-slate-200 dark:border-slate-700 shadow-2xs">
                           <Key className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                          <span className="font-bold">{acc.password || '••••••••'}</span>
-                        </span>
+                          <span className="font-bold select-all tracking-wide text-xs">
+                            {(showAllPasswords || showPasswordMap[acc.id])
+                              ? (acc.password || '-')
+                              : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleRowPassword(acc.id)}
+                            className="text-slate-400 hover:text-blue-600 dark:hover:text-cyan-400 transition cursor-pointer p-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                            title={(showAllPasswords || showPasswordMap[acc.id]) ? "Sembunyikan Password" : "Lihat Password Asli"}
+                          >
+                            {(showAllPasswords || showPasswordMap[acc.id]) ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
