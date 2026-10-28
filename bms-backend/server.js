@@ -128,7 +128,7 @@ function matchForm(formType) {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
-    // Pastikan kolom status dan tipe role sudah mendukung nilai fleksibel
+    // Pastikan kolom status, role, dan is_archived sudah terkonfigurasi
     try {
       const [colCheck] = await connection.query("SHOW COLUMNS FROM users LIKE 'status'");
       if (!colCheck || colCheck.length === 0) {
@@ -136,10 +136,19 @@ function matchForm(formType) {
       }
     } catch (e) {}
     try {
+      const [colArchived] = await connection.query("SHOW COLUMNS FROM users LIKE 'is_archived'");
+      if (!colArchived || colArchived.length === 0) {
+        await connection.query("ALTER TABLE users ADD COLUMN is_archived TINYINT(1) DEFAULT 0 AFTER status");
+      }
+    } catch (e) {}
+    try {
       await connection.query("ALTER TABLE users MODIFY COLUMN role VARCHAR(50) NOT NULL DEFAULT 'karyawan'");
     } catch (e) {}
     try {
       await connection.query("UPDATE users SET status = 'active' WHERE status IS NULL OR status = ''");
+    } catch (e) {}
+    try {
+      await connection.query("UPDATE users SET is_archived = 0 WHERE is_archived IS NULL");
     } catch (e) {}
 
     // 2. Seeder Akun Admin (admin_besmindo) & 20 Akun Rig
@@ -358,7 +367,7 @@ app.post('/api/login', async (req, res) => {
     const trimmedPass = String(password).trim();
 
     const query = `
-      SELECT id, username, password, name, role, rig_name 
+      SELECT id, username, password, name, role, status, is_archived, rig_name 
       FROM users 
       WHERE LOWER(username) = LOWER(?) 
          OR LOWER(REPLACE(username, '_', '')) = LOWER(REPLACE(?, '_', ''))
@@ -377,6 +386,14 @@ app.post('/api/login', async (req, res) => {
     }
 
     const user = rows[0];
+
+    // Cek apakah akun rig diarsipkan (soft delete)
+    if (user.is_archived === 1 || user.is_archived === true) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akun Rig ini telah diarsipkan dan tidak dapat digunakan untuk login. Riwayat laporan tetap tersimpan aman.'
+      });
+    }
     let isPasswordValid = false;
 
     // Cek apakah password tersimpan dalam format hash bcrypt ($2a$ atau $2b$)
@@ -511,16 +528,21 @@ app.get('/api/users', requireAdmin, async (req, res) => {
 });
 
 // ── CRUD MANAJEMEN AKUN RIG DARI DATABASE MYSQL ─────────────────
-// 1. GET /api/rigs - Ambil seluruh akun Rig dari database
+// 1. GET /api/rigs - Ambil seluruh akun Rig yang aktif / belum diarsipkan dari database
 app.get('/api/rigs', async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, include_archived } = req.query;
     let query = `
-      SELECT id, username, name, role, status, rig_name, password, created_at, updated_at 
+      SELECT id, username, name, role, status, is_archived, rig_name, password, created_at, updated_at 
       FROM users 
       WHERE (role = 'karyawan' OR role = 'rig')
     `;
     const params = [];
+
+    // Filter: HANYA muat Rig yang belum diarsipkan
+    if (include_archived !== 'true') {
+      query += ` AND (is_archived = 0 OR is_archived IS NULL)`;
+    }
 
     if (status === 'active') {
       query += ` AND (status IS NULL OR status = 'active' OR status != 'inactive')`;
@@ -535,6 +557,7 @@ app.get('/api/rigs', async (req, res) => {
     const safeRows = rows.map(u => ({
       ...u,
       status: u.status || 'active',
+      is_archived: u.is_archived ? 1 : 0,
       password: (u.password && (u.password.startsWith('$2a$') || u.password.startsWith('$2b$')))
         ? '•••••••• (Bcrypt)'
         : u.password
@@ -654,11 +677,10 @@ app.put('/api/rigs/:id/status', async (req, res) => {
   }
 });
 
-// 5. DELETE /api/rigs/:id - Hapus atau Nonaktifkan akun Rig
-app.delete('/api/rigs/:id', async (req, res) => {
+// 5. PUT /api/rigs/:id/archive - Arsipkan akun Rig (Soft Delete)
+app.put('/api/rigs/:id/archive', async (req, res) => {
   try {
     const { id } = req.params;
-    const { permanent } = req.query;
 
     const [rows] = await pool.query('SELECT id, username, rig_name, role FROM users WHERE id = ?', [id]);
     if (rows.length === 0) {
@@ -666,25 +688,71 @@ app.delete('/api/rigs/:id', async (req, res) => {
     }
 
     if (rows[0].role === 'admin') {
-      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh dihapus!' });
+      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh diarsipkan!' });
     }
 
-    if (permanent === 'true') {
-      await pool.query('DELETE FROM users WHERE id = ?', [id]);
-      return res.json({
-        success: true,
-        message: `Akun ${rows[0].rig_name || rows[0].username} berhasil dihapus permanen dari sistem.`
-      });
-    } else {
-      await pool.query('UPDATE users SET status = "inactive" WHERE id = ?', [id]);
-      return res.json({
-        success: true,
-        message: `Akun ${rows[0].rig_name || rows[0].username} berhasil dinonaktifkan.`
-      });
-    }
+    // Soft delete: UPDATE is_archived = 1 dan nonaktifkan status
+    await pool.query('UPDATE users SET is_archived = 1, status = "inactive" WHERE id = ?', [id]);
+
+    return res.json({
+      success: true,
+      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil diarsipkan. Rig tidak akan bisa login, namun riwayat laporannya akan tetap tersimpan aman.`
+    });
   } catch (err) {
-    console.error('Error deleting/deactivating rig:', err);
-    return res.status(500).json({ success: false, message: 'Gagal memproses akun rig: ' + err.message });
+    console.error('Error archiving rig:', err);
+    return res.status(500).json({ success: false, message: 'Gagal mengarsipkan akun rig: ' + err.message });
+  }
+});
+
+// Alias PATCH /api/rigs/:id/archive
+app.patch('/api/rigs/:id/archive', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await pool.query('SELECT id, username, rig_name, role FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Akun rig tidak ditemukan.' });
+    }
+
+    if (rows[0].role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh diarsipkan!' });
+    }
+
+    await pool.query('UPDATE users SET is_archived = 1, status = "inactive" WHERE id = ?', [id]);
+
+    return res.json({
+      success: true,
+      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil diarsipkan. Rig tidak akan bisa login, namun riwayat laporannya akan tetap tersimpan aman.`
+    });
+  } catch (err) {
+    console.error('Error archiving rig:', err);
+    return res.status(500).json({ success: false, message: 'Gagal mengarsipkan akun rig: ' + err.message });
+  }
+});
+
+// 6. DELETE /api/rigs/:id - Aliaskan DELETE ke Soft Delete (Arsip) agar data riwayat inspeksi tetap aman
+app.delete('/api/rigs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await pool.query('SELECT id, username, rig_name, role FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Akun rig tidak ditemukan.' });
+    }
+
+    if (rows[0].role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh diarsipkan!' });
+    }
+
+    // Soft delete: UPDATE is_archived = 1
+    await pool.query('UPDATE users SET is_archived = 1, status = "inactive" WHERE id = ?', [id]);
+    return res.json({
+      success: true,
+      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil diarsipkan. Rig tidak akan bisa login, namun riwayat laporannya akan tetap tersimpan aman.`
+    });
+  } catch (err) {
+    console.error('Error archiving rig:', err);
+    return res.status(500).json({ success: false, message: 'Gagal mengarsipkan akun rig: ' + err.message });
   }
 });
 
@@ -944,7 +1012,7 @@ app.get('/api/analytics', async (req, res) => {
     const periodStr = `${selectedYear}-${monthStr}`;
     const monthPattern = `${periodStr}%`;
 
-    // 1. Ambil jumlah Rig terdaftar aktif
+    // 1. Ambil jumlah Rig terdaftar aktif (tidak diarsipkan)
     const [rigUsers] = await pool.query(`
       SELECT DISTINCT rig_name 
       FROM users 
@@ -952,6 +1020,7 @@ app.get('/api/analytics', async (req, res) => {
         AND rig_name IS NOT NULL 
         AND rig_name != ''
         AND (status IS NULL OR status = 'active' OR status != 'inactive')
+        AND (is_archived = 0 OR is_archived IS NULL)
     `);
     const totalRigs = rigUsers.length > 0 ? rigUsers.length : ALL_RIGS.length;
     const totalWajib = totalRigs * 9; // 9 formulir HSE per Rig per bulan
@@ -1149,7 +1218,7 @@ app.get('/api/inspections/overview', async (req, res) => {
       ORDER BY updated_at DESC, created_at DESC
     `, [periodStr, monthPattern, selectedYear, selectedMonth]);
 
-    // Ambil seluruh daftar Rig aktif langsung dari database MySQL
+    // Ambil seluruh daftar Rig aktif langsung dari database MySQL (tidak diarsipkan)
     const [rigUsers] = await pool.query(`
       SELECT DISTINCT rig_name 
       FROM users 
@@ -1157,6 +1226,7 @@ app.get('/api/inspections/overview', async (req, res) => {
         AND rig_name IS NOT NULL 
         AND rig_name != ''
         AND (status IS NULL OR status = 'active' OR status != 'inactive')
+        AND (is_archived = 0 OR is_archived IS NULL)
       ORDER BY id ASC
     `);
 

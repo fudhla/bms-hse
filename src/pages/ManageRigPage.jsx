@@ -14,7 +14,7 @@ import {
   Check,
   User,
   Plus,
-  Trash2,
+  Archive,
   Power,
   Search,
   Building2,
@@ -74,9 +74,9 @@ export default function ManageRigPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  // ── Modal State: Konfirmasi Hapus / Nonaktifkan ──
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // ── Modal State: Konfirmasi Arsip Rig (Soft Delete) ──
+  const [archiveTarget, setArchiveTarget] = useState(null);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   // ── Helper Toast ──
   const showToast = (message, type = 'success') => {
@@ -258,30 +258,27 @@ export default function ManageRigPage() {
     }
   };
 
-  // ── 5. DELETE: Hapus Rig ──
-  const handleDeleteRig = async (permanent = false) => {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
+  // ── 5. ARCHIVE: Arsipkan Rig (Soft Delete) ──
+  const handleArchiveRig = async () => {
+    if (!archiveTarget) return;
+    setIsArchiving(true);
     try {
       const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-      const url = `${API_BASE_URL}/api/rigs/${deleteTarget.id}${permanent ? '?permanent=true' : ''}`;
-      const res = await fetch(url, { method: 'DELETE', headers });
+      const url = `${API_BASE_URL}/api/rigs/${archiveTarget.id}/archive`;
+      const res = await fetch(url, { method: 'PUT', headers });
       const data = await res.json();
 
-      if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memproses penghapusan rig.');
+      if (!res.ok || !data.success) throw new Error(data.message || 'Gagal mengarsipkan akun rig.');
 
-      if (permanent) {
-        setRigs(prev => prev.filter(r => r.id !== deleteTarget.id));
-      } else {
-        setRigs(prev => prev.map(r => r.id === deleteTarget.id ? { ...r, status: 'inactive' } : r));
-      }
+      // Hapus rig dari daftar aktif di state
+      setRigs(prev => prev.filter(r => r.id !== archiveTarget.id));
 
-      showToast(data.message || 'Akun rig berhasil diproses.');
-      setDeleteTarget(null);
+      showToast(data.message || `Akun ${archiveTarget.rig_name || archiveTarget.username} berhasil diarsipkan.`);
+      setArchiveTarget(null);
     } catch (err) {
-      showToast(err.message || 'Gagal menghapus akun rig.', 'error');
+      showToast(err.message || 'Gagal mengarsipkan akun rig.', 'error');
     } finally {
-      setIsDeleting(false);
+      setIsArchiving(false);
     }
   };
 
@@ -339,8 +336,11 @@ export default function ManageRigPage() {
     }
   };
 
+  // ── Data Rig Non-Arsip (Hanya yang is_archived = 0) ──
+  const nonArchivedRigs = rigs.filter(r => !r.is_archived || r.is_archived === 0);
+
   // ── Filtered Rigs ──
-  const filteredRigs = rigs.filter((r) => {
+  const filteredRigs = nonArchivedRigs.filter((r) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch = 
       (r.rig_name && r.rig_name.toLowerCase().includes(q)) ||
@@ -352,8 +352,8 @@ export default function ManageRigPage() {
     return matchesSearch;
   });
 
-  const totalActiveRigs = rigs.filter(r => r.status !== 'inactive').length;
-  const totalInactiveRigs = rigs.filter(r => r.status === 'inactive').length;
+  const totalActiveRigs = nonArchivedRigs.filter(r => r.status !== 'inactive').length;
+  const totalInactiveRigs = nonArchivedRigs.filter(r => r.status === 'inactive').length;
 
   return (
     <div className="space-y-6">
@@ -417,7 +417,7 @@ export default function ManageRigPage() {
               Total Rig Terdaftar
             </p>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {rigs.length} <span className="text-xs text-slate-400 font-normal">Akun</span>
+              {nonArchivedRigs.length} <span className="text-xs text-slate-400 font-normal">Akun</span>
             </h3>
           </div>
           <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-cyan-400">
@@ -758,14 +758,14 @@ export default function ManageRigPage() {
                             <Power className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Tombol Hapus */}
+                          {/* Tombol Arsip (Soft Delete) */}
                           <button
                             type="button"
-                            onClick={() => setDeleteTarget(acc)}
-                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-400 transition cursor-pointer"
-                            title="Hapus / Nonaktifkan Rig"
+                            onClick={() => setArchiveTarget(acc)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer shadow-xs"
+                            title="Arsipkan Akun Rig (Soft Delete)"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Archive className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -1044,57 +1044,52 @@ export default function ManageRigPage() {
         </div>
       )}
 
-      {/* ── MODAL: KONFIRMASI NONAKTIFKAN / HAPUS RIG ── */}
-      {deleteTarget && (
+      {/* ── MODAL: KONFIRMASI ARSIPKAN RIG (SOFT DELETE) ── */}
+      {archiveTarget && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in duration-200"
-          onClick={() => setDeleteTarget(null)}
+          onClick={() => setArchiveTarget(null)}
         >
           <div 
-            className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-300 dark:border-slate-700 shadow-2xl p-5"
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-300 dark:border-slate-700 shadow-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-3">
-              <Trash2 className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
+              <Archive className="w-6 h-6" />
             </div>
 
-            <h3 className="text-center font-black text-sm text-slate-900 dark:text-white">
-              Kelola Akun Rig {deleteTarget.rig_name || deleteTarget.username}
+            <h3 className="text-center font-black text-base text-slate-900 dark:text-white">
+              Arsipkan Akun {archiveTarget.rig_name || archiveTarget.username}?
             </h3>
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Pilih apakah Anda ingin menonaktifkan akun rig ini (dapat diaktifkan kembali nanti) atau menghapusnya secara permanen dari database.
+            <p className="text-center text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
+              Apakah Anda yakin ingin mengarsipkan Rig ini? Rig tidak akan bisa login, namun riwayat laporannya akan tetap tersimpan aman.
             </p>
 
-            <div className="mt-5 space-y-2">
+            <div className="mt-6 space-y-2.5">
               <button
                 type="button"
-                disabled={isDeleting}
-                onClick={() => handleDeleteRig(false)}
-                className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center space-x-1.5"
+                disabled={isArchiving}
+                onClick={handleArchiveRig}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center space-x-2"
               >
-                <Power className="w-3.5 h-3.5" />
-                <span>Nonaktifkan Akun (Disarankan)</span>
+                {isArchiving ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Mengarsipkan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Archive className="w-3.5 h-3.5" />
+                    <span>Ya, Arsipkan Rig</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
-                disabled={isDeleting}
-                onClick={() => {
-                  if (window.confirm(`Yakin ingin MENGHAPUS PERMANEN akun ${deleteTarget.rig_name}? Tindakan ini tidak dapat dibatalkan.`)) {
-                    handleDeleteRig(true);
-                  }
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center justify-center space-x-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Hapus Permanen dari Database</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={() => setDeleteTarget(null)}
-                className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
+                disabled={isArchiving}
+                onClick={() => setArchiveTarget(null)}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
               >
                 Batal
               </button>
