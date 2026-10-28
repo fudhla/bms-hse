@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSe
 import { Menu } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PeriodProvider, usePeriod } from './context/PeriodContext';
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import DashboardOverview from './components/DashboardOverview';
@@ -44,12 +45,26 @@ function pathToTabId(pathname) {
 /* ─── Form route wrapper — membaca searchParams & pass ke form ─── */
 function FormRoute({ FormComponent, onBack }) {
   const { user } = useAuth();
+  const { selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = usePeriod();
   const [searchParams] = useSearchParams();
 
   // Ambil override dari URL query string (dikirim oleh Admin dari Dashboard)
   const rigFromUrl   = searchParams.get('rig')   || null;
-  const monthFromUrl = searchParams.get('month') ? Number(searchParams.get('month')) : null;
-  const yearFromUrl  = searchParams.get('year')  ? Number(searchParams.get('year'))  : null;
+  const monthQuery   = searchParams.get('month');
+  const yearQuery    = searchParams.get('year');
+
+  const monthFromUrl = monthQuery ? Number(monthQuery) : selectedMonth;
+  const yearFromUrl  = yearQuery  ? Number(yearQuery)  : selectedYear;
+
+  // Sinkronisasi ke Global Period jika ada query param di URL
+  useEffect(() => {
+    if (monthQuery && Number(monthQuery) !== selectedMonth) {
+      setSelectedMonth(Number(monthQuery));
+    }
+    if (yearQuery && Number(yearQuery) !== selectedYear) {
+      setSelectedYear(Number(yearQuery));
+    }
+  }, [monthQuery, yearQuery, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear]);
 
   return (
     <div className="form-sheet">
@@ -164,7 +179,7 @@ function ProtectedLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto custom-scrollbar">
           <Routes>
             {/* ── Dashboard ── */}
             <Route path="/"         element={<DashboardOverview onSelectForm={handleSelectForm} />} />
@@ -217,12 +232,14 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/*"     element={<ProtectedLayout />} />
-          </Routes>
-        </BrowserRouter>
+        <PeriodProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/*"     element={<ProtectedLayout />} />
+            </Routes>
+          </BrowserRouter>
+        </PeriodProvider>
       </AuthProvider>
     </ThemeProvider>
   );

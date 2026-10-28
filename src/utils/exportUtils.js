@@ -108,84 +108,94 @@ export const APD_COLUMN_KEYS = [
   'jas_hujan'
 ];
 
+export const DEFAULT_HARNESS_IMAGES = {
+  1: '/images/harness/webbing.png',
+  2: '/images/harness/snap-hooks.png',
+  3: '/images/harness/d-rings.png',
+  4: '/images/harness/buckles.png',
+  5: '/images/harness/sewing.png',
+  6: '/images/harness/rope.png',
+  7: '/images/harness/energy-absorber.png',
+  8: '/images/harness/trauma-strap.png',
+  9: '/images/harness/labelling.png'
+};
+
 export const HARNESS_CHECKLIST_SECTIONS = [
   {
     id: 1,
     komponen: 'WEBBING',
+    image: '/images/harness/webbing.png',
     items: [
-      'Terpotong atau Sobek',
-      'Berubah bentuk / Abrasi karena bergesekan',
-      'Keregangan yang berlebihan',
-      'Rusak karena panas, korosi atau zat kimia'
+      'Ada yang terpotong / sobek / terurai',
+      'Terkena panas / percikan api las',
+      'Ada bekas bahan kimia / asam / pelarut',
+      'Terdapat modifikasi yang tidak standar'
     ]
   },
   {
     id: 2,
     komponen: 'SNAP HOOKS & KARABINER',
+    image: '/images/harness/snap-hooks.png',
     items: [
-      'Distorsi ( berubah bentuk )',
-      'Keretakan',
-      'Beban berlebih',
-      'Safety Lock berfungsi dengan baik',
-      'Kondisi pegas Safety Lock yang melemah',
-      'Safety Lock yang tidak presisi',
-      'Korosi / keropos',
-      'Bebas dari kotoran dan penyumbatan'
+      'Ada bengkok / retak / korosi',
+      'Penguncian tidak bekerja dengan baik',
+      'Kait pengaman (keeper) longgar / rusak',
+      'Karat berlebih'
     ]
   },
   {
     id: 3,
     komponen: 'D - RINGS',
+    image: '/images/harness/d-rings.png',
     items: [
-      'D - Ring bergerak baik pada Roller',
-      'Keretakan atau memipih',
-      'Distorsi ( berubah bentuk ) atau aus',
-      'Korosi / keropos',
-      'Beban berlebih'
+      'Bengkok / retak / aus',
+      'Berkarat berlebihan',
+      'Posisi bergeser tidak normal'
     ]
   },
   {
     id: 4,
     komponen: 'BUCKLETS & ADJUSTERS\n(Kancing Sabuk Pengaman)',
+    image: '/images/harness/buckles.png',
     items: [
-      'Distorsi ( berubah bentuk ) atau aus',
-      'Keretakan atau memipih',
-      'Korosi / keropos',
-      'Bengkok',
-      'Open Rollers'
+      'Bengkok / retak / aus',
+      'Mekanisme penguncian aus / longgar',
+      'Bagian kancing hilang'
     ]
   },
   {
     id: 5,
     komponen: 'SEWING\n(Jahitan)',
+    image: '/images/harness/sewing.png',
     items: [
-      'Putus atau sobek',
-      'Benang melapuk karena panas, karat, jamur',
-      'Perbaikan sendiri / tanpa lisensi'
+      'Jahitan putus / robek / terlepas',
+      'Benang lapuk / aus'
     ]
   },
   {
     id: 6,
-    komponen: 'ROPE (Tali)',
+    komponen: 'ROPE\n(Tali)',
+    image: '/images/harness/rope.png',
     items: [
-      'Putus',
-      'Tegangan yang berlebih',
-      'Pelapukan karena zat kimia',
-      'Pelapukan karena panas, karat, sinar matahari',
-      'Kerusakan atau retak pada thimbles'
+      'Serat putus / terkikis',
+      'Diameter tali mengecil / gepeng',
+      'Kaku karena zat kimia / panas'
     ]
   },
   {
     id: 7,
     komponen: 'ENERGY ABSORBER\n(Peredam Kejut)',
+    image: '/images/harness/energy-absorber.png',
     items: [
-      'Peredam kejut belum mengalami peregangan',
-      'Perbaikan tanpa lisensi'
+      'Telah terbuka / pernah menahan jatuh',
+      'Sobek / basah / lapuk',
+      'Cover pelindung hilang / rusak'
     ]
   },
   {
     id: 8,
     komponen: 'BLOOD SUSPENSION TRAUMA',
+    image: '/images/harness/trauma-strap.png',
     items: [
       'Putus atau robek',
       'Kantong tidak ada',
@@ -195,6 +205,7 @@ export const HARNESS_CHECKLIST_SECTIONS = [
   {
     id: 9,
     komponen: 'LABELLING\n(Sertifikasi)',
+    image: '/images/harness/labelling.png',
     items: [
       'Tercantum nomor seri dan mudah dibaca',
       'Label produksi',
@@ -248,12 +259,13 @@ export function isRowEmpty(item, formKey = '') {
   if (formKey === 'scba') {
     const snStr = String(item.sn || '').trim();
     const penempatanStr = String(item.penempatan || '').trim();
+    const certVal = item.certExpireDate || item.certValidDate || item.certDate || item.cert;
     const hasRealCond = (item.pressure && item.pressure !== 'N/A') ||
                         (item.hose && item.hose !== 'N/A') ||
                         (item.rubber && item.rubber !== 'N/A') ||
                         (item.valve && item.valve !== 'N/A') ||
                         (item.tabung && item.tabung !== 'N/A') ||
-                        (item.cert && item.cert !== '-' && item.cert !== '');
+                        (certVal && certVal !== '-' && certVal !== '');
     const isSnBlank = !snStr || snStr === '-' || snStr.toLowerCase() === 'null' || snStr.toLowerCase() === 'undefined';
     const isPenempatanBlank = !penempatanStr || penempatanStr === '-' || penempatanStr.toLowerCase() === 'null' || penempatanStr.toLowerCase() === 'undefined';
     return isSnBlank && isPenempatanBlank && !hasRealCond;
@@ -302,8 +314,8 @@ export function filterActiveInspectionRows(items, formKey = '') {
  */
 export function sanitizeCondition(val, isEmpty = false) {
   if (isEmpty) return '';
-  if (val === 'Good' || val === 'V' || val === 'v' || val === '✓' || val === true) return 'V';
-  if (val === 'Bad' || val === 'X' || val === 'x' || val === false) return 'X';
+  if (val === 'Good' || val === 'OK' || val === 'ok' || val === 'V' || val === 'v' || val === '✓' || val === true) return 'V';
+  if (val === 'Bad' || val === 'bad' || val === 'X' || val === 'x' || val === '✕' || val === '✗' || val === false) return 'X';
   if (val === 'N/A' || val === 'na' || val === 'NA') return 'N/A';
   if (!val || val === '-') return '-';
   return String(val);
@@ -359,12 +371,32 @@ export function getLogoDataUrl() {
 /**
  * Memastikan gambar tersedia dalam format Base64 Data URL valid untuk jsPDF
  */
-export function ensureBase64Image(src) {
-  if (!src || typeof src !== 'string') return Promise.resolve(null);
-  if (src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') || src.startsWith('data:image/jpg')) {
-    return Promise.resolve(src);
+export async function ensureBase64Image(src) {
+  if (!src || typeof src !== 'string') return null;
+  if (src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') || src.startsWith('data:image/jpg') || src.startsWith('data:image/')) {
+    return src;
   }
 
+  // 1. Coba konversi via fetch Blob -> Data URL (Metode tercepat & terandal untuk aset /public)
+  if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+    try {
+      const response = await fetch(src);
+      if (response.ok) {
+        const blob = await response.blob();
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+        if (base64) return base64;
+      }
+    } catch {
+      // Lanjut ke fallback Image canvas jika fetch gagal
+    }
+  }
+
+  // 2. Fallback via Image & Canvas
   return new Promise((resolve) => {
     try {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -790,21 +822,21 @@ export async function exportToPdf(inspectionData, explicitFormKey = null) {
   let tableBody = [];
   let columnStyles = {};
 
-  // Pra-resolusi foto komponen jika formulir adalah harness
+  // Pra-resolusi foto komponen jika formulir adalah harness (kustom upload atau default)
   const resolvedHarnessPhotos = {};
-  if (formKey === 'harness' && componentPhotos && typeof componentPhotos === 'object') {
-    const photoEntries = Object.entries(componentPhotos);
+  if (formKey === 'harness') {
     await Promise.all(
-      photoEntries.map(async ([secId, pSrc]) => {
+      HARNESS_CHECKLIST_SECTIONS.map(async (sec) => {
+        const pSrc = (componentPhotos && (componentPhotos[sec.id] || componentPhotos[String(sec.id)])) || DEFAULT_HARNESS_IMAGES[sec.id] || sec.image;
         if (pSrc) {
           try {
             const imgObj = await resolveHarnessImage(pSrc);
             if (imgObj) {
-              resolvedHarnessPhotos[secId] = imgObj;
-              resolvedHarnessPhotos[String(secId)] = imgObj;
+              resolvedHarnessPhotos[sec.id] = imgObj;
+              resolvedHarnessPhotos[String(sec.id)] = imgObj;
             }
           } catch (e) {
-            console.warn('Gagal memproses foto komponen harness section', secId, e);
+            console.warn('Gagal memproses foto komponen harness section', sec.id, e);
           }
         }
       })
@@ -1048,53 +1080,151 @@ export async function exportToPdf(inspectionData, explicitFormKey = null) {
   } else if (formKey === 'scba') {
     tableHead = [
       [
-        { content: 'NO', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'KATEGORI ALAT', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'SERIAL NO (SN)', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'PENEMPATAN', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'PRESSURE', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'HOSE', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'SERTIFIKAT', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'RUBBER', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'VALVE', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'WHISTLE', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'TABUNG', styles: { valign: 'middle', halign: 'center' } },
-        { content: 'REKOMENDASI', styles: { valign: 'middle', halign: 'center' } }
+        { content: 'NO', rowSpan: 3, styles: { valign: 'middle', halign: 'center' } },
+        { content: 'MERK, TYPE / SERIAL NO', rowSpan: 3, styles: { valign: 'middle', halign: 'center' } },
+        { content: 'PENEMPATAN', rowSpan: 3, styles: { valign: 'middle', halign: 'center' } },
+        { content: 'C O N D I T I O N', colSpan: 14, styles: { valign: 'middle', halign: 'center', fontStyle: 'bold' } },
+        { content: 'REKOMENDASI (Catatan)', rowSpan: 3, styles: { valign: 'middle', halign: 'center' } }
+      ],
+      [
+        { content: 'PRESSURE VOLUME', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'HOSE', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'CERTIFICATE', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'RUBBER MASKER & TAIL', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'VALVE & connection', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'WISTLE', colSpan: 2, styles: { halign: 'center' } },
+        { content: 'TABUNG', colSpan: 2, styles: { halign: 'center' } }
+      ],
+      [
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } },
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } },
+        { content: 'Berlaku', styles: { halign: 'center', fontSize: 4.8, fontStyle: 'bold' } }, { content: 'Expire', styles: { halign: 'center', fontSize: 4.8, fontStyle: 'bold' } },
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } },
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } },
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } },
+        { content: 'V', styles: { halign: 'center', fontSize: 6.5 } }, { content: 'X', styles: { halign: 'center', fontSize: 6.5 } }
       ]
     ];
 
-    const activeItems = filterActiveInspectionRows(items, 'scba');
+    const rawData = norm.rawData || {};
+    let scbaList = rawData.scba_items;
+    let elsaList = rawData.elsa_items;
 
-    tableBody = activeItems.map((it, idx) => {
-      return [
+    if (!Array.isArray(scbaList) || !Array.isArray(elsaList)) {
+      scbaList = items.filter(it => !it.isElsa && !String(it.category || '').toLowerCase().includes('elsa'));
+      elsaList = items.filter(it => it.isElsa || String(it.category || '').toLowerCase().includes('elsa'));
+    }
+
+    if (scbaList.length === 0) {
+      scbaList = [1, 2, 3, 4, 5].map(no => ({ no, sn: '', penempatan: '', pressure: '', hose: '', cert: '', certValidDate: '', certExpireDate: '', rubber: '', valve: '', whistle: '', tabung: '', rekomendasi: '' }));
+    }
+    if (elsaList.length === 0) {
+      elsaList = [1, 2].map(no => ({ no, sn: '', penempatan: '', pressure: '', hose: '', cert: '', certValidDate: '', certExpireDate: '', rubber: '', valve: '', whistle: 'N/A', tabung: '', rekomendasi: '', isElsa: true }));
+    }
+
+    const pairCondition = (val) => {
+      const isV = val === '✓' || val === 'Good' || val === 'Berlaku' || val === 'V' || val === 'v' || val === 'OK' || val === 'ok';
+      const isX = val === '✕' || val === 'X' || val === 'x' || val === '✗' || val === 'Bad' || val === 'Expire';
+      return [isV ? 'V' : '', isX ? 'X' : ''];
+    };
+
+    const formatCertDate = (val) => {
+      if (!val) return '-';
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+        const parts = val.slice(0, 10).split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return String(val);
+    };
+
+    tableBody = [];
+
+    // ── GRUP 1: SCBA ──
+    tableBody.push([
+      {
+        content: 'SCBA SPERIAN 30 MNT :',
+        colSpan: 18,
+        styles: { fontStyle: 'bold', fillColor: [226, 232, 240], textColor: [15, 23, 42], halign: 'left', cellPadding: 1.5 }
+      }
+    ]);
+
+    scbaList.forEach((it, idx) => {
+      const [pv_v, pv_x] = pairCondition(it.pressure);
+      const [hs_v, hs_x] = pairCondition(it.hose);
+      const ct_berlaku = formatCertDate(it.certValidDate || it.certStartDate);
+      const ct_expire = formatCertDate(it.certExpireDate || it.certDate || (it.cert && it.cert.includes('-') ? it.cert : ''));
+      const [rb_v, rb_x] = pairCondition(it.rubber);
+      const [vl_v, vl_x] = pairCondition(it.valve);
+      const [ws_v, ws_x] = pairCondition(it.whistle);
+      const [tb_v, tb_x] = pairCondition(it.tabung);
+
+      tableBody.push([
         `${idx + 1}.`,
-        it.category || '-',
-        it.sn || '-',
+        it.sn ? `S/N: ${it.sn}` : '-',
         it.penempatan || '-',
-        sanitizeCondition(it.pressure, false),
-        sanitizeCondition(it.hose, false),
-        it.cert || 'Berlaku',
-        sanitizeCondition(it.rubber, false),
-        sanitizeCondition(it.valve, false),
-        it.isElsa ? 'N/A' : sanitizeCondition(it.whistle, false),
-        sanitizeCondition(it.tabung, false),
+        pv_v, pv_x,
+        hs_v, hs_x,
+        ct_berlaku, ct_expire,
+        rb_v, rb_x,
+        vl_v, vl_x,
+        ws_v, ws_x,
+        tb_v, tb_x,
         it.rekomendasi || 'Normal'
-      ];
+      ]);
+    });
+
+    // ── GRUP 2: ELSA ──
+    tableBody.push([
+      {
+        content: 'ELSA 10 Menit :',
+        colSpan: 18,
+        styles: { fontStyle: 'bold', fillColor: [226, 232, 240], textColor: [15, 23, 42], halign: 'left', cellPadding: 1.5 }
+      }
+    ]);
+
+    elsaList.forEach((it, idx) => {
+      const [pv_v, pv_x] = pairCondition(it.pressure);
+      const [hs_v, hs_x] = pairCondition(it.hose);
+      const ct_berlaku = formatCertDate(it.certValidDate || it.certStartDate);
+      const ct_expire = formatCertDate(it.certExpireDate || it.certDate || (it.cert && it.cert.includes('-') ? it.cert : ''));
+      const [rb_v, rb_x] = pairCondition(it.rubber);
+      const [vl_v, vl_x] = pairCondition(it.valve);
+      const [tb_v, tb_x] = pairCondition(it.tabung);
+
+      tableBody.push([
+        `${idx + 1}.`,
+        it.sn ? `S/N: ${it.sn}` : '-',
+        it.penempatan || '-',
+        pv_v, pv_x,
+        hs_v, hs_x,
+        ct_berlaku, ct_expire,
+        rb_v, rb_x,
+        vl_v, vl_x,
+        { content: '', colSpan: 2, styles: { fillColor: [0, 0, 0] } },
+        tb_v, tb_x,
+        it.rekomendasi || 'Normal'
+      ]);
     });
 
     columnStyles = {
-      0: { cellWidth: 9, halign: 'center' },
-      1: { cellWidth: 32, halign: 'left' },
-      2: { cellWidth: 26, halign: 'center' },
-      3: { cellWidth: 30, halign: 'left' },
-      4: { cellWidth: 16, halign: 'center' },
-      5: { cellWidth: 14, halign: 'center' },
-      6: { cellWidth: 18, halign: 'center' },
-      7: { cellWidth: 14, halign: 'center' },
-      8: { cellWidth: 14, halign: 'center' },
-      9: { cellWidth: 16, halign: 'center' },
-      10: { cellWidth: 14, halign: 'center' },
-      11: { halign: 'left' }
+      0: { cellWidth: 8, halign: 'center' },
+      1: { cellWidth: 42, halign: 'left' },
+      2: { cellWidth: 28, halign: 'left' },
+      3: { cellWidth: 8, halign: 'center' },
+      4: { cellWidth: 8, halign: 'center' },
+      5: { cellWidth: 8, halign: 'center' },
+      6: { cellWidth: 8, halign: 'center' },
+      7: { cellWidth: 15, halign: 'center', fontSize: 5 },
+      8: { cellWidth: 15, halign: 'center', fontSize: 5 },
+      9: { cellWidth: 8, halign: 'center' },
+      10: { cellWidth: 8, halign: 'center' },
+      11: { cellWidth: 8, halign: 'center' },
+      12: { cellWidth: 8, halign: 'center' },
+      13: { cellWidth: 8, halign: 'center' },
+      14: { cellWidth: 8, halign: 'center' },
+      15: { cellWidth: 8, halign: 'center' },
+      16: { cellWidth: 8, halign: 'center' },
+      17: { halign: 'left' }
     };
   } else if (formKey === 'firstaid') {
     tableHead = [
@@ -1317,10 +1447,15 @@ export async function exportToPdf(inspectionData, explicitFormKey = null) {
           return;
         }
 
+        if (rawCell && typeof rawCell === 'object' && rawCell.styles?.fillColor) {
+          data.cell.text = [];
+          return;
+        }
+
         const raw = String(data.cell.raw || '').trim();
         if (raw === 'V' || raw === 'v' || raw === '✓') {
           data.cell.text = []; // kosongkan teks untuk digambar vektor
-        } else if (raw === 'X' || raw === 'x') {
+        } else if (raw === 'X' || raw === 'x' || raw === '✕' || raw === '✗') {
           data.cell.text = []; // kosongkan teks untuk digambar vektor
         } else if (raw === 'N/A' || raw === 'na') {
           data.cell.text = ['N/A'];
@@ -1377,12 +1512,16 @@ export async function exportToPdf(inspectionData, explicitFormKey = null) {
           return;
         }
 
+        if (rawCell && typeof rawCell === 'object' && rawCell.styles?.fillColor) {
+          return;
+        }
+
         const raw = String(data.cell.raw || '').trim();
         if (raw === 'V' || raw === 'v' || raw === '✓') {
           const cx = data.cell.x + (data.cell.width / 2) - 1.2;
           const cy = data.cell.y + (data.cell.height / 2) - 1.3;
           drawVectorCheckmark(doc, cx, cy, 2.4, [5, 150, 105]);
-        } else if (raw === 'X' || raw === 'x') {
+        } else if (raw === 'X' || raw === 'x' || raw === '✕' || raw === '✗') {
           const cx = data.cell.x + (data.cell.width / 2) - 1.1;
           const cy = data.cell.y + (data.cell.height / 2) - 1.1;
           drawVectorCross(doc, cx, cy, 2.2, [225, 29, 72]);
@@ -1767,26 +1906,83 @@ export async function exportToExcel(inspectionData, explicitFormKey = null) {
   } else if (formKey === 'scba') {
     headers = [
       'No', 'Kategori Alat', 'Serial No (SN)', 'Penempatan',
-      'Pressure', 'Hose', 'Sertifikasi', 'Rubber', 'Valve', 'Whistle', 'Tabung',
+      'Pressure Volume', 'Hose', 'Certificate (Berlaku)', 'Certificate (Expire)', 'Rubber Masker & Tail', 'Valve & Connection', 'Whistle', 'Tabung',
       'Rekomendasi'
     ];
 
-    const activeItems = filterActiveInspectionRows(items, 'scba');
-    dataRows = activeItems.map((it, idx) => {
-      return [
-        idx + 1,
-        it.category || '-',
+    const rawData = norm.rawData || {};
+    let scbaList = rawData.scba_items;
+    let elsaList = rawData.elsa_items;
+
+    if (!Array.isArray(scbaList) || !Array.isArray(elsaList)) {
+      scbaList = items.filter(it => !it.isElsa && !String(it.category || '').toLowerCase().includes('elsa'));
+      elsaList = items.filter(it => it.isElsa || String(it.category || '').toLowerCase().includes('elsa'));
+    }
+
+    if (scbaList.length === 0) {
+      scbaList = [1, 2, 3, 4, 5].map(no => ({ no, sn: '', penempatan: '', pressure: '', hose: '', cert: '', certValidDate: '', certExpireDate: '', rubber: '', valve: '', whistle: '', tabung: '', rekomendasi: '' }));
+    }
+    if (elsaList.length === 0) {
+      elsaList = [1, 2].map(no => ({ no, sn: '', penempatan: '', pressure: '', hose: '', cert: '', certValidDate: '', certExpireDate: '', rubber: '', valve: '', whistle: 'N/A', tabung: '', rekomendasi: '', isElsa: true }));
+    }
+
+    const formatCertDate = (val) => {
+      if (!val) return '-';
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+        const parts = val.slice(0, 10).split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return String(val);
+    };
+
+    const getCertValid = (it) => {
+      return formatCertDate(it.certValidDate || it.certStartDate);
+    };
+
+    const getCertExpire = (it) => {
+      const exp = it.certExpireDate || it.certDate || (it.cert && it.cert.includes('-') ? it.cert : '');
+      if (exp) return formatCertDate(exp);
+      if (it.cert === 'Berlaku' || it.cert === '✓') return 'Berlaku';
+      if (it.cert === 'Expire' || it.cert === '✕') return 'Expire';
+      return it.cert || '-';
+    };
+
+    dataRows = [];
+    let rowNum = 1;
+    (scbaList || []).forEach((it) => {
+      dataRows.push([
+        rowNum++,
+        'SCBA SPERIAN 30 MNT',
         it.sn || '-',
         it.penempatan || '-',
         sanitizeCondition(it.pressure, false),
         sanitizeCondition(it.hose, false),
-        it.cert || 'Berlaku',
+        getCertValid(it),
+        getCertExpire(it),
         sanitizeCondition(it.rubber, false),
         sanitizeCondition(it.valve, false),
-        it.isElsa ? 'N/A' : sanitizeCondition(it.whistle, false),
+        sanitizeCondition(it.whistle, false),
         sanitizeCondition(it.tabung, false),
         it.rekomendasi || 'Normal'
-      ];
+      ]);
+    });
+
+    (elsaList || []).forEach((it) => {
+      dataRows.push([
+        rowNum++,
+        'ELSA 10 Menit',
+        it.sn || '-',
+        it.penempatan || '-',
+        sanitizeCondition(it.pressure, false),
+        sanitizeCondition(it.hose, false),
+        getCertValid(it),
+        getCertExpire(it),
+        sanitizeCondition(it.rubber, false),
+        sanitizeCondition(it.valve, false),
+        'N/A',
+        sanitizeCondition(it.tabung, false),
+        it.rekomendasi || 'Normal'
+      ]);
     });
   } else if (formKey === 'firstaid') {
     headers = ['No', 'Daftar Isi / Jenis Obat', 'Ukuran', 'Jumlah', 'Tanggal Kadaluarsa', 'Kondisi', 'Catatan Temuan'];

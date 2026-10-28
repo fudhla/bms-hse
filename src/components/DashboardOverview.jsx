@@ -25,18 +25,30 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { usePeriod } from '../context/PeriodContext';
 import PeriodFilter from './PeriodFilter';
 import { MONTH_NAMES, API_BASE_URL } from '../constants/periodConstants';
+
+// ── 9 FORMULIR STANDAR INSPEKSI HSE ─────────────────────────────
+export const DEFAULT_FORMS = [
+  { form_id: 'apar',      title: 'APAR Inspection Form',                 doc_no: 'BMSD/13/FO/HSE/12/25' },
+  { form_id: 'apd',       title: 'APD / PPE Inspection Form',             doc_no: 'BMSD/22/FO/HSE/01/26' },
+  { form_id: 'eyewash',   title: 'Eye Wash & Shower Inspection Form',     doc_no: 'BMSD/44/FO/HSE/12/25' },
+  { form_id: 'firstaid',  title: 'First Aid Box Form',                    doc_no: 'BMSD/46/FO/HSE/04/25' },
+  { form_id: 'harness',   title: 'Harness Inspection Form',               doc_no: 'BMSD/17/FO/HSE/08/26' },
+  { form_id: 'oxigent',   title: 'Oxigent Monthly Form',                  doc_no: 'BMSD/47/FO/HSE/08/21' },
+  { form_id: 'scba',      title: 'SCBA Monthly Form',                     doc_no: 'BMSD/43/FO/HSE/06/25' },
+  { form_id: 'spillkit',  title: 'Spill Kit Inspection Form',             doc_no: 'BMSD/48/FO/HSE/09/21' },
+  { form_id: 'stretcher', title: 'Stretcher Inspection Form',             doc_no: 'BMSD/45/FO/HSE/06/20' },
+];
 
 export default function DashboardOverview({ onSelectForm }) {
   const { user, token } = useAuth();
   const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('bms_token') : null);
   const { isDark } = useTheme();
 
-  // Filter Periode Bulan & Tahun
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  // Filter Periode Bulan & Tahun dari Global State (PeriodContext)
+  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, period } = usePeriod();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'complete', 'draft', 'incomplete'
 
@@ -46,7 +58,7 @@ export default function DashboardOverview({ onSelectForm }) {
   const [error, setError] = useState('');
 
   const isAdmin = user?.role === 'admin';
-  const userRigName = user?.rig_name || 'BMS 01';
+  const userRigName = user?.rig_name || user?.rig_no || user?.rig || (user?.username?.toUpperCase?.()?.includes('BMS') ? user.username.toUpperCase() : 'BMS 01');
 
   // Ikon Map untuk 9 Form
   const iconMap = {
@@ -85,19 +97,21 @@ export default function DashboardOverview({ onSelectForm }) {
 
     try {
       const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      const monthStr = String(selectedMonth).padStart(2, '0');
+      const queryParams = `month=${selectedMonth}&year=${selectedYear}&period=${selectedYear}-${monthStr}`;
 
       if (isAdmin) {
         // Fetch Matriks Semua Rig untuk Admin
-        const res = await fetch(`${API_BASE_URL}/api/inspections/overview?month=${selectedMonth}&year=${selectedYear}`, { headers });
+        const res = await fetch(`${API_BASE_URL}/api/inspections/overview?${queryParams}`, { headers });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memuat data matriks inspeksi.');
         setOverviewData(data);
       } else {
         // Fetch Status Rig Karyawan Spesifik
-        const res = await fetch(`${API_BASE_URL}/api/inspections/overview/${encodeURIComponent(userRigName)}?month=${selectedMonth}&year=${selectedYear}`, { headers });
+        const res = await fetch(`${API_BASE_URL}/api/inspections/overview/${encodeURIComponent(userRigName)}?${queryParams}`, { headers });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memuat data inspeksi Rig.');
-        setRigData(data.rig_overview);
+        setRigData(data.rig_overview || null);
       }
     } catch (err) {
       console.error('Error fetching overview:', err);
@@ -113,12 +127,43 @@ export default function DashboardOverview({ onSelectForm }) {
 
   // Filter Rigs untuk Admin
   const filteredRigs = (overviewData?.rigs || []).filter((r) => {
-    const matchesSearch = r.rig_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (r?.rig_name || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (statusFilter === 'complete') return matchesSearch && r.is_complete;
     if (statusFilter === 'draft') return matchesSearch && !r.is_complete && (r.draft_count > 0);
     if (statusFilter === 'incomplete') return matchesSearch && !r.is_complete;
     return matchesSearch;
   });
+
+  // Metrik aman Rig Karyawan dengan fallback dan optional chaining
+  const submittedCount = rigData?.submitted_count ?? rigData?.filled_count ?? 0;
+  const draftCount = rigData?.draft_count ?? 0;
+  const totalForms = rigData?.total_forms ?? 9;
+  const notStartedCount = rigData?.not_started_count ?? Math.max(0, totalForms - submittedCount - draftCount);
+  const percentage = rigData?.percentage ?? (totalForms > 0 ? Math.round((submittedCount / totalForms) * 100) : 0);
+
+  // Daftar 9 formulir aman: gunakan data dari backend jika ada, fallback ke DEFAULT_FORMS
+  const safeFormsList = (rigData?.forms && Array.isArray(rigData.forms) && rigData.forms.length > 0)
+    ? rigData.forms.map(form => ({
+        ...form,
+        form_id: form?.form_id || form?.id,
+        title: form?.title || DEFAULT_FORMS.find(d => d.form_id === (form?.form_id || form?.id))?.title || 'Formulir HSE',
+        doc_no: form?.doc_no || form?.docNo || DEFAULT_FORMS.find(d => d.form_id === (form?.form_id || form?.id))?.doc_no || '-',
+        status: form?.status || (form?.is_filled ? 'submitted' : (form?.is_draft ? 'draft' : 'not_started')),
+        last_submitted: form?.last_submitted || null,
+        hfo_name: form?.hfo_name || null
+      }))
+    : DEFAULT_FORMS.map(def => ({
+        ...def,
+        status: 'not_started',
+        is_filled: false,
+        is_draft: false,
+        last_submitted: null,
+        submission_id: null,
+        hfo_name: null
+      }));
+
+  // Kondisi Kosong (Empty State): belum ada formulir terkirim maupun draft pada periode terpilih
+  const isRigDataEmpty = (submittedCount === 0 && draftCount === 0);
 
   return (
     <div className="space-y-6 transition-colors duration-200">
@@ -177,13 +222,17 @@ export default function DashboardOverview({ onSelectForm }) {
         </div>
       )}
 
-      {/* Loading Skeleton Pulse */}
+      {/* Loading Skeleton / Fetching Indicator */}
       {loading && !rigData && !overviewData && (
-        <div className="space-y-6 animate-pulse">
-          <div className="h-44 bg-slate-200 dark:bg-slate-800/80 rounded-2xl border border-slate-300 dark:border-slate-700/50"></div>
+        <div className="space-y-6">
+          <div className="h-44 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl border border-slate-700/50 shadow-xl shadow-slate-900/20 flex flex-col justify-center items-center text-center">
+            <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mb-2" />
+            <p className="text-base font-bold text-white">Memuat Data Inspeksi Rig {userRigName}...</p>
+            <p className="text-xs text-slate-300 mt-1">Periode pemeriksaan: {monthNames[selectedMonth - 1]} {selectedYear}</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-40 bg-slate-200 dark:bg-slate-800/80 rounded-2xl border border-slate-300 dark:border-slate-700/50"></div>
+              <div key={i} className="h-40 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -192,59 +241,93 @@ export default function DashboardOverview({ onSelectForm }) {
       {/* ======================================================== */}
       {/* TAMPILAN 1: DASHBOARD KARYAWAN (PER RIG SPESIFIK) */}
       {/* ======================================================== */}
-      {!isAdmin && rigData && (
+      {!isAdmin && (
         <div className="space-y-6">
           
           {/* Kartu Ringkasan Progres Rig */}
-          <div className="bg-gradient-to-br from-blue-900 via-slate-900 to-slate-950 text-white p-6 rounded-2xl shadow-lg border border-blue-800/40 relative overflow-hidden">
-            <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl border border-slate-700/50 shadow-xl shadow-slate-900/20 relative overflow-hidden">
+            <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-start lg:items-center gap-4">
               <div>
-                <p className="text-xs uppercase font-extrabold tracking-widest text-cyan-400">
-                  Ringkasan Kepatuhan Rig {userRigName}
-                </p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xs uppercase font-extrabold tracking-widest text-cyan-400">
+                    Ringkasan Kepatuhan Rig {userRigName}
+                  </p>
+                  {isRigDataEmpty && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                      Belum ada data inspeksi
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-2xl font-black mt-1">
-                  {rigData.submitted_count ?? rigData.filled_count} dari {rigData.total_forms} Form Terkirim
+                  {isRigDataEmpty ? (
+                    <span className="text-amber-300">Belum ada data inspeksi</span>
+                  ) : (
+                    `${submittedCount} dari ${totalForms} Form Terkirim`
+                  )}
                 </h2>
                 <p className="text-xs text-slate-300 mt-1">
                   Periode pemeriksaan: <span className="font-bold text-white">{monthNames[selectedMonth - 1]} {selectedYear}</span>
+                  {isRigDataEmpty && (
+                    <span className="text-slate-400"> — Seluruh 9 formulir pemeriksaan belum diisi</span>
+                  )}
                 </p>
               </div>
 
               {/* Status Pills */}
               <div className="flex flex-wrap gap-2">
-                <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{rigData.submitted_count ?? rigData.filled_count} Terkirim</span>
-                </div>
-                {(rigData.draft_count ?? 0) > 0 && (
+                {isRigDataEmpty ? (
+                  <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-slate-800/90 text-amber-300 border border-amber-500/30">
+                    <AlertTriangle className="w-4 h-4 text-amber-400" />
+                    <span>Belum ada data inspeksi</span>
+                  </div>
+                ) : (
+                  <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{submittedCount} Terkirim</span>
+                  </div>
+                )}
+                {draftCount > 0 && (
                   <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-400/40">
                     <Clock className="w-4 h-4" />
-                    <span>{rigData.draft_count} Draft</span>
+                    <span>{draftCount} Draft</span>
                   </div>
                 )}
-                {(rigData.not_started_count ?? (rigData.total_forms - rigData.filled_count)) > 0 && (
-                  <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-rose-500/20 text-rose-300 border border-rose-400/40">
-                    <XCircle className="w-4 h-4" />
-                    <span>{rigData.not_started_count ?? (rigData.total_forms - rigData.filled_count)} Belum</span>
-                  </div>
-                )}
+                <div className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 bg-rose-500/20 text-rose-300 border border-rose-400/40">
+                  <XCircle className="w-4 h-4" />
+                  <span>{notStartedCount} Belum Diisi</span>
+                </div>
               </div>
             </div>
+
+            {/* Banner Penanganan Empty State */}
+            {isRigDataEmpty && (
+              <div className="mt-4 p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs flex items-start sm:items-center space-x-3 relative z-10">
+                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div>
+                  <p className="font-bold text-white">Belum ada data inspeksi</p>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    Data inspeksi untuk Rig {userRigName} pada bulan {monthNames[selectedMonth - 1]} {selectedYear} belum tersedia. Silakan klik tombol "Isi Sekarang" pada formulir di bawah ini untuk memulai pengisian.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Progress Bar Persentase */}
             <div className="mt-5 relative z-10">
               <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
-                <span>Kelengkapan Dokumen</span>
-                <span className="text-cyan-400 font-mono text-sm">{rigData.percentage}%</span>
+                <span>Kelengkapan Dokumen ({submittedCount}/{totalForms} Form)</span>
+                <span className="text-cyan-400 font-mono text-sm">{percentage}%</span>
               </div>
-              <div className="w-full bg-slate-800/90 rounded-full h-3 p-0.5 border border-slate-700">
+              <div className="w-full bg-slate-700/50 rounded-full h-3 p-0.5 border border-slate-700/60">
                 <div 
                   className={`h-full rounded-full transition-all duration-700 ${
-                    rigData.percentage === 100 
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400' 
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                    percentage === 100 
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.4)]' 
+                      : percentage > 0
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-400 shadow-[0_0_10px_rgba(37,99,235,0.4)]'
+                        : 'bg-slate-700'
                   }`}
-                  style={{ width: `${Math.max(rigData.percentage, 5)}%` }}
+                  style={{ width: `${Math.max(percentage, isRigDataEmpty ? 0 : 5)}%` }}
                 />
               </div>
             </div>
@@ -263,67 +346,64 @@ export default function DashboardOverview({ onSelectForm }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rigData.forms.map((form) => {
-                const Icon = iconMap[form.form_id] || FileCheck2;
-                const accentColor = colorMap[form.form_id] || 'text-blue-600 bg-blue-50';
+              {safeFormsList.map((form) => {
+                const Icon = iconMap[form?.form_id] || FileCheck2;
                 // 3-color status: use form.status if available, fallback to is_filled
-                const status = form.status || (form.is_filled ? 'submitted' : 'not_started');
-
-                const borderClass = status === 'submitted'
-                  ? 'border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-400'
-                  : status === 'draft'
-                    ? 'border-amber-200 dark:border-amber-900/60 hover:border-amber-400'
-                    : 'border-rose-200 dark:border-rose-900/60 hover:border-rose-400';
+                const status = form?.status || (form?.is_filled ? 'submitted' : (form?.is_draft ? 'draft' : 'not_started'));
 
                 return (
                   <div
-                    key={form.form_id}
-                    className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border transition-all duration-200 shadow-sm flex flex-col justify-between group hover:shadow-md ${borderClass}`}
+                    key={form?.form_id}
+                    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-slate-200/70 dark:hover:border-slate-700 dark:hover:shadow-2xl dark:hover:shadow-slate-950/80 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group overflow-hidden"
                   >
-                    <div>
-                      {/* Header Kartu Form */}
-                      <div className="flex justify-between items-start mb-3">
-                        <div className={`p-2.5 rounded-xl ${accentColor}`}>
-                          <Icon className="w-5 h-5" />
+                    {/* Area Konten Utama */}
+                    <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div>
+                        {/* Header Kartu Form */}
+                        <div className="flex justify-between items-start mb-3.5">
+                          {/* Ikon Form dengan container lembut */}
+                          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/80 shadow-xs">
+                            <Icon className="w-5 h-5 text-blue-600 dark:text-cyan-400" />
+                          </div>
+
+                          {/* Status Badge — 3 warna (Clean & Luminous di Dark Mode) */}
+                          {status === 'submitted' ? (
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>TERKIRIM</span>
+                            </span>
+                          ) : status === 'draft' ? (
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/25">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>DRAFT</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/25">
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>BELUM DIISI</span>
+                            </span>
+                          )}
                         </div>
 
-                        {/* Status Badge — 3 warna */}
-                        {status === 'submitted' ? (
-                          <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>TERKIRIM</span>
-                          </span>
-                        ) : status === 'draft' ? (
-                          <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>DRAFT</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                            <XCircle className="w-3.5 h-3.5" />
-                            <span>BELUM DIISI</span>
-                          </span>
-                        )}
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-cyan-300 transition-colors">
+                          {form?.title || 'Formulir Inspeksi'}
+                        </h4>
+                        <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+                          {form?.doc_no || '-'}
+                        </p>
                       </div>
 
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors">
-                        {form.title}
-                      </h4>
-                      <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
-                        {form.doc_no}
-                      </p>
-
-                      {/* Info Pengisian */}
-                      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                      {/* Info Pengisian Metadata */}
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
                         {status === 'submitted' ? (
                           <div className="space-y-1 text-slate-600 dark:text-slate-300">
                             <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                               <Clock className="w-3.5 h-3.5" />
-                              <span>Tgl: {form.last_submitted ? String(form.last_submitted).split('T')[0] : '-'}</span>
+                              <span>Tgl: {form?.last_submitted ? String(form.last_submitted).split('T')[0] : '-'}</span>
                             </div>
-                            {form.hfo_name && (
-                              <p className="truncate text-slate-500 dark:text-slate-400">
-                                Oleh: <span className="font-medium text-slate-700 dark:text-slate-200">{form.hfo_name}</span>
+                            {form?.hfo_name && (
+                              <p className="truncate text-slate-400 dark:text-slate-500">
+                                Oleh: <span className="font-medium text-slate-600 dark:text-slate-300">{form.hfo_name}</span>
                               </p>
                             )}
                           </div>
@@ -333,30 +413,28 @@ export default function DashboardOverview({ onSelectForm }) {
                             <span>Draft tersimpan — belum dikirim</span>
                           </p>
                         ) : (
-                          <p className="text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center space-x-1">
-                            <span>Formulir wajib diisi bulan ini!</span>
+                          <p className="text-slate-400 dark:text-slate-500 text-xs flex items-center space-x-1">
+                            <span>Belum ada data inspeksi tersimpan</span>
                           </p>
                         )}
                       </div>
                     </div>
 
-                    {/* Tombol Aksi */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => onSelectForm({ formKey: form.form_id, rigName: userRigName, month: selectedMonth, year: selectedYear })}
-                        className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm ${
-                          status === 'submitted'
-                            ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
-                            : status === 'draft'
-                              ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30'
-                              : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/30'
-                        }`}
-                      >
-                        <span>{status === 'submitted' ? 'Lihat / Ekspor' : status === 'draft' ? 'Lanjut Isi Draft' : 'Isi Sekarang'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {/* Tombol Aksi Full-Width Bawah (Tegas di Light Mode, Luminous Elegan di Dark Mode) */}
+                    <button
+                      type="button"
+                      onClick={() => onSelectForm({ formKey: form?.form_id, rigName: userRigName, month: selectedMonth, year: selectedYear })}
+                      className={`w-full py-3.5 text-[13px] font-bold flex justify-center items-center gap-2 transition-all duration-300 rounded-b-2xl cursor-pointer ${
+                        status === 'submitted'
+                          ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25 dark:group-hover:text-emerald-200 dark:group-hover:border-emerald-400/40 dark:group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                          : status === 'draft'
+                            ? 'bg-amber-100/90 text-amber-900 border-t border-amber-200/90 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 group-hover:shadow-md dark:bg-amber-500/10 dark:text-amber-400 dark:border-t dark:border-amber-500/25 dark:group-hover:bg-amber-500/25 dark:group-hover:text-amber-200 dark:group-hover:border-amber-400/40 dark:group-hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                            : 'bg-rose-100/90 text-rose-800 border-t border-rose-200/90 group-hover:bg-rose-600 group-hover:text-white group-hover:border-rose-600 group-hover:shadow-md dark:bg-rose-500/10 dark:text-rose-400 dark:border-t dark:border-rose-500/25 dark:group-hover:bg-rose-500/25 dark:group-hover:text-rose-200 dark:group-hover:border-rose-400/40 dark:group-hover:shadow-[0_0_15px_rgba(244,63,94,0.2)]'
+                      }`}
+                    >
+                      <span>{status === 'submitted' ? 'Lihat / Ekspor' : status === 'draft' ? 'Lanjut Isi Draft' : 'Isi Sekarang'}</span>
+                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </button>
                   </div>
                 );
               })}
@@ -546,9 +624,9 @@ export default function DashboardOverview({ onSelectForm }) {
 
           {/* Matriks Kartu Rig (BMS 01 - BMS 23) */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredRigs.map((rig) => (
+            {(filteredRigs || []).map((rig) => (
               <div
-                key={rig.rig_name}
+                key={rig?.rig_name}
                 className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-all"
               >
                 <div>
@@ -556,11 +634,11 @@ export default function DashboardOverview({ onSelectForm }) {
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
-                        {rig.rig_name.replace('BMS ', '')}
+                        {(rig?.rig_name || '').replace('BMS ', '')}
                       </div>
                       <div>
                         <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
-                          Rig {rig.rig_name}
+                          Rig {rig?.rig_name}
                         </h4>
                         <p className="text-[10px] text-slate-500 font-mono">
                           {monthNames[selectedMonth - 1]} {selectedYear}
@@ -570,14 +648,14 @@ export default function DashboardOverview({ onSelectForm }) {
 
                     {/* Badge Kelengkapan — 3 status */}
                     <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
-                      rig.is_complete
+                      rig?.is_complete
                         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                        : (rig.draft_count ?? 0) > 0
+                        : (rig?.draft_count ?? 0) > 0
                           ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800'
                           : 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border-rose-200 dark:border-rose-800'
                     }`}>
-                      {rig.submitted_count ?? rig.filled_count}/{rig.total_forms} ✓
-                      {(rig.draft_count ?? 0) > 0 && ` · ${rig.draft_count}⏳`}
+                      {rig?.submitted_count ?? rig?.filled_count ?? 0}/{rig?.total_forms ?? 9} ✓
+                      {(rig?.draft_count ?? 0) > 0 && ` · ${rig.draft_count}⏳`}
                     </span>
                   </div>
 
@@ -586,18 +664,18 @@ export default function DashboardOverview({ onSelectForm }) {
                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          rig.is_complete ? 'bg-emerald-500' : 'bg-blue-600'
+                          rig?.is_complete ? 'bg-emerald-500' : 'bg-blue-600'
                         }`}
-                        style={{ width: `${rig.percentage}%` }}
+                        style={{ width: `${rig?.percentage ?? 0}%` }}
                       />
                     </div>
                   </div>
 
                   {/* Daftar 9 Form Status Pills — 3 warna */}
                   <div className="space-y-1.5 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    {rig.forms.map((form) => {
-                      const Icon = iconMap[form.form_id] || FileCheck2;
-                      const fStatus = form.status || (form.is_filled ? 'submitted' : 'not_started');
+                    {(rig?.forms || []).map((form) => {
+                      const Icon = iconMap[form?.form_id] || FileCheck2;
+                      const fStatus = form?.status || (form?.is_filled ? 'submitted' : (form?.is_draft ? 'draft' : 'not_started'));
                       const rowClass = fStatus === 'submitted'
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200'
                         : fStatus === 'draft'
@@ -610,21 +688,21 @@ export default function DashboardOverview({ onSelectForm }) {
                           : 'text-slate-400';
                       return (
                         <div
-                          key={form.form_id}
-                          onClick={() => onSelectForm({ formKey: form.form_id, rigName: rig.rig_name, month: selectedMonth, year: selectedYear })}
+                          key={form?.form_id}
+                          onClick={() => onSelectForm({ formKey: form?.form_id, rigName: rig?.rig_name, month: selectedMonth, year: selectedYear })}
                           className={`flex items-center justify-between p-2 rounded-xl text-xs transition cursor-pointer ${rowClass}`}
-                          title={`Buka formulir ${form.title}`}
+                          title={`Buka formulir ${form?.title || 'Inspeksi'}`}
                         >
                           <div className="flex items-center space-x-2 truncate pr-2">
                             <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${iconClass}`} />
-                            <span className="truncate font-semibold">{form.title}</span>
+                            <span className="truncate font-semibold">{form?.title || 'Formulir HSE'}</span>
                           </div>
 
                           <div className="flex items-center space-x-1.5 flex-shrink-0">
                             {fStatus === 'submitted' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
-                                <span>{form.last_submitted ? String(form.last_submitted).split('T')[0] : '✓'}</span>
+                                <span>{form?.last_submitted ? String(form.last_submitted).split('T')[0] : '✓'}</span>
                               </span>
                             ) : fStatus === 'draft' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">
@@ -647,13 +725,13 @@ export default function DashboardOverview({ onSelectForm }) {
                 {/* Footer Kartu Rig */}
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
                   <span className="text-[11px] text-slate-500 font-medium">
-                    {rig.is_complete
+                    {rig?.is_complete
                       ? '✓ Semua form beres'
-                      : `${rig.not_started_count ?? (rig.total_forms - rig.filled_count)} form perlu diisi`}
+                      : `${rig?.not_started_count ?? ((rig?.total_forms ?? 9) - (rig?.filled_count ?? 0))} form perlu diisi`}
                   </span>
                   <button
                     type="button"
-                    onClick={() => onSelectForm({ formKey: 'apar', rigName: rig.rig_name, month: selectedMonth, year: selectedYear })}
+                    onClick={() => onSelectForm({ formKey: 'apar', rigName: rig?.rig_name, month: selectedMonth, year: selectedYear })}
                     className="text-blue-600 dark:text-cyan-400 font-bold hover:underline flex items-center space-x-1"
                   >
                     <span>Buka Inspeksi</span>
@@ -664,11 +742,11 @@ export default function DashboardOverview({ onSelectForm }) {
             ))}
           </div>
 
-          {filteredRigs.length === 0 && (
+          {(!filteredRigs || filteredRigs.length === 0) && (
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                Tidak ada Rig yang sesuai dengan pencarian "{searchQuery}"
+                {searchQuery ? `Tidak ada Rig yang sesuai dengan pencarian "${searchQuery}"` : `Belum ada data inspeksi untuk periode ${monthNames[selectedMonth - 1]} ${selectedYear}`}
               </p>
               <button
                 type="button"

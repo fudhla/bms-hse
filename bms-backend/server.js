@@ -108,8 +108,9 @@ function matchForm(formType) {
 
 // ── 3. INISIALISASI TABEL & SEEDER DATABASE ──────────────────────
 (async function initDatabase() {
+  let connection;
   try {
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
     console.log('✓ Terhubung ke database MySQL:', process.env.DB_NAME || 'bms_hse_db');
 
     // 1. Buat tabel users jika belum ada
@@ -129,7 +130,10 @@ function matchForm(formType) {
 
     // Pastikan kolom status dan tipe role sudah mendukung nilai fleksibel
     try {
-      await connection.query("ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'active' AFTER role");
+      const [colCheck] = await connection.query("SHOW COLUMNS FROM users LIKE 'status'");
+      if (!colCheck || colCheck.length === 0) {
+        await connection.query("ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'active' AFTER role");
+      }
     } catch (e) {}
     try {
       await connection.query("ALTER TABLE users MODIFY COLUMN role VARCHAR(50) NOT NULL DEFAULT 'karyawan'");
@@ -200,8 +204,23 @@ function matchForm(formType) {
         await connection.query(`ALTER TABLE inspections ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
       }
       await connection.query(`UPDATE inspections SET status = 'submitted' WHERE status IS NULL OR status = ''`);
+
+      // Pastikan kolom period ada untuk isolasi data bulanan (Closed-Loop Monthly Inspections)
+      const [colPeriod] = await connection.query(`SHOW COLUMNS FROM inspections LIKE 'period'`);
+      if (colPeriod.length === 0) {
+        await connection.query(`ALTER TABLE inspections ADD COLUMN period VARCHAR(20) NULL AFTER rig_no`);
+        try {
+          await connection.query(`ALTER TABLE inspections ADD INDEX idx_insp_rig_type_period (rig_no, form_type, period)`);
+        } catch (idxErr) {}
+      }
+      // Backfill nilai period dari tanggal lama
+      await connection.query(`
+        UPDATE inspections 
+        SET period = DATE_FORMAT(tanggal, '%Y-%m') 
+        WHERE (period IS NULL OR period = '') AND tanggal REGEXP '^[0-9]{4}-[0-9]{2}'
+      `);
     } catch (colErr) {
-      console.log('Pemeriksaan kolom status:', colErr.message);
+      console.log('Pemeriksaan kolom status & period:', colErr.message);
     }
 
     // 4. Buat tabel harness_inspections & harness_items
@@ -305,10 +324,11 @@ function matchForm(formType) {
     }
 
     console.log('✓ Database dan tabel berhasil diinisialisasi.');
-    connection.release();
   } catch (err) {
     console.error('⚠️ Peringatan koneksi MySQL:', err.message);
     console.log('Pastikan MySQL (XAMPP) sudah berjalan dan database "bms_hse_db" telah dibuat.');
+  } finally {
+    if (connection) connection.release();
   }
 })();
 
@@ -905,18 +925,27 @@ app.delete('/api/available-years/:year', requireAdmin, async (req, res) => {
 app.get('/api/inspections/overview', async (req, res) => {
   try {
     const now = new Date();
-    const selectedMonth = parseInt(req.query.month, 10) || (now.getMonth() + 1);
-    const selectedYear = parseInt(req.query.year, 10) || now.getFullYear();
+    let selectedMonth = parseInt(req.query.month, 10);
+    let selectedYear = parseInt(req.query.year, 10);
+    if (req.query.period && req.query.period.includes('-')) {
+      const parts = req.query.period.split('-');
+      selectedYear = parseInt(parts[0], 10) || selectedYear;
+      selectedMonth = parseInt(parts[1], 10) || selectedMonth;
+    }
+    if (!selectedMonth || isNaN(selectedMonth)) selectedMonth = now.getMonth() + 1;
+    if (!selectedYear || isNaN(selectedYear)) selectedYear = now.getFullYear();
     const monthStr = String(selectedMonth).padStart(2, '0');
+    const periodStr = `${selectedYear}-${monthStr}`;
 
-    const monthPattern = `${selectedYear}-${monthStr}%`;
+    const monthPattern = `${periodStr}%`;
     const [rows] = await pool.query(`
-      SELECT id, form_type, form_code, rig_no, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
+      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
       FROM inspections
-      WHERE tanggal LIKE ? 
-         OR (YEAR(created_at) = ? AND MONTH(created_at) = ?)
+      WHERE period = ? 
+         OR tanggal LIKE ? 
+         OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?))
       ORDER BY updated_at DESC, created_at DESC
-    `, [monthPattern, selectedYear, selectedMonth]);
+    `, [periodStr, monthPattern, selectedYear, selectedMonth]);
 
     // Ambil seluruh daftar Rig aktif langsung dari database MySQL
     const [rigUsers] = await pool.query(`
@@ -1041,19 +1070,29 @@ app.get('/api/inspections/overview/:rig_name', async (req, res) => {
   try {
     const { rig_name } = req.params;
     const now = new Date();
-    const selectedMonth = parseInt(req.query.month, 10) || (now.getMonth() + 1);
-    const selectedYear = parseInt(req.query.year, 10) || now.getFullYear();
+    let selectedMonth = parseInt(req.query.month, 10);
+    let selectedYear = parseInt(req.query.year, 10);
+    if (req.query.period && req.query.period.includes('-')) {
+      const parts = req.query.period.split('-');
+      selectedYear = parseInt(parts[0], 10) || selectedYear;
+      selectedMonth = parseInt(parts[1], 10) || selectedMonth;
+    }
+    if (!selectedMonth || isNaN(selectedMonth)) selectedMonth = now.getMonth() + 1;
+    if (!selectedYear || isNaN(selectedYear)) selectedYear = now.getFullYear();
     const monthStr = String(selectedMonth).padStart(2, '0');
+    const periodStr = `${selectedYear}-${monthStr}`;
 
     const normRig = normalizeRig(rig_name);
-    const monthPattern = `${selectedYear}-${monthStr}%`;
+    const monthPattern = `${periodStr}%`;
 
     const [rows] = await pool.query(`
-      SELECT id, form_type, form_code, rig_no, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
+      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
       FROM inspections
-      WHERE (tanggal LIKE ? OR (YEAR(created_at) = ? AND MONTH(created_at) = ?))
+      WHERE period = ?
+         OR tanggal LIKE ?
+         OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?))
       ORDER BY updated_at DESC, created_at DESC
-    `, [monthPattern, selectedYear, selectedMonth]);
+    `, [periodStr, monthPattern, selectedYear, selectedMonth]);
 
     const rigInspections = rows.filter(row => {
       const rowRig = normalizeRig(row.rig_no);
@@ -1136,24 +1175,35 @@ app.get('/api/inspections/overview/:rig_name', async (req, res) => {
 // ── 8. ENDPOINT INSPECTIONS CRUD & DATA SUBMIT ────────────────────
 app.get('/api/inspections/latest', async (req, res) => {
   try {
-    const { rig_no, form_id, form_type, month, year } = req.query;
+    const { rig_no, form_id, form_type, month, year, period } = req.query;
     if (!rig_no) {
       return res.status(400).json({ success: false, message: 'Parameter rig_no wajib disertakan' });
     }
 
     const now = new Date();
-    const selectedMonth = parseInt(month, 10) || (now.getMonth() + 1);
-    const selectedYear = parseInt(year, 10) || now.getFullYear();
-    const monthStr = String(selectedMonth).padStart(2, '0');
-    const monthPattern = `${selectedYear}-${monthStr}%`;
+    let selectedMonth, selectedYear, periodStr;
 
+    if (period && typeof period === 'string' && period.includes('-')) {
+      const parts = period.split('-');
+      selectedYear = parseInt(parts[0], 10) || now.getFullYear();
+      selectedMonth = parseInt(parts[1], 10) || (now.getMonth() + 1);
+      periodStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+    } else {
+      selectedMonth = parseInt(month, 10) || (now.getMonth() + 1);
+      selectedYear = parseInt(year, 10) || now.getFullYear();
+      periodStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+    }
+
+    const monthPattern = `${periodStr}%`;
     const normRig = normalizeRig(rig_no);
 
     const [rows] = await pool.query(`
       SELECT * FROM inspections
-      WHERE (tanggal LIKE ? OR (YEAR(created_at) = ? AND MONTH(created_at) = ?))
+      WHERE period = ?
+         OR tanggal LIKE ?
+         OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?))
       ORDER BY updated_at DESC, created_at DESC
-    `, [monthPattern, selectedYear, selectedMonth]);
+    `, [periodStr, monthPattern, selectedYear, selectedMonth]);
 
     const matchingRows = rows.filter(row => {
       const rowRig = normalizeRig(row.rig_no);
@@ -1287,7 +1337,7 @@ function extractAlertsFromInspections(rows) {
           const brokenKeys = [];
           checkKeys.forEach(k => {
             const val = String(item[k] || '').trim().toLowerCase();
-            if (val === 'bad' || val === 'rusak' || val === 'x' || val === 'no') {
+            if (val === 'bad' || val === 'rusak' || val === 'x' || val === 'no' || val === '✕' || val === '✗') {
               brokenKeys.push(k);
             }
           });
@@ -1395,7 +1445,12 @@ function extractAlertsFromInspections(rows) {
         items.forEach((item, idx) => {
           const remarks = String(item.remarks || '').trim();
           const condition = String(item.condition || item.status || '').trim().toLowerCase();
-          const isX = condition === 'x' || condition === 'bad' || condition === 'rusak';
+          const scbaChecks = ['pressure', 'hose', 'cert', 'rubber', 'valve', 'whistle', 'tabung'];
+          const hasBadCheck = scbaChecks.some(k => {
+            const v = String(item[k] || '').trim().toLowerCase();
+            return v === 'x' || v === '✕' || v === '✗' || v === 'bad' || v === 'expire' || v === 'rusak';
+          });
+          const isX = condition === 'x' || condition === '✕' || condition === '✗' || condition === 'bad' || condition === 'rusak' || hasBadCheck;
           const hasRemarks = remarks.length > 0 && !['good', 'ok', 'baik', 'aman', '-', 'nihil'].includes(remarks.toLowerCase());
 
           if (isX || hasRemarks) {
@@ -1531,7 +1586,7 @@ function extractAlertsFromInspections(rows) {
           const brokenKeys = [];
           checkKeys.forEach(k => {
             const val = String(item[k] || '').trim().toLowerCase();
-            if (val === 'x' || val === 'bad' || val === 'rusak') brokenKeys.push(k);
+            if (val === 'x' || val === '✕' || val === '✗' || val === 'bad' || val === 'rusak') brokenKeys.push(k);
           });
           const rek = String(item.rekomendasi || '').trim();
           const hasBroken = brokenKeys.length > 0;
@@ -1876,7 +1931,7 @@ app.post('/api/inspections/alerts/:id/verify', handleAlertVerification);
 // Ambil daftar riwayat inspeksi
 app.get('/api/inspections', async (req, res) => {
   try {
-    const { rig_no, form_type, month, year, status } = req.query;
+    const { rig_no, form_type, month, year, period, status } = req.query;
     let query = 'SELECT * FROM inspections WHERE 1=1';
     const params = [];
 
@@ -1890,20 +1945,28 @@ app.get('/api/inspections', async (req, res) => {
       params.push(form_type);
     }
 
-    if (month && month !== 'all' && year && year !== 'all') {
+    if (period && period !== 'all' && period.includes('-')) {
+      const parts = period.split('-');
+      const pYear = parseInt(parts[0], 10);
+      const pMonth = parseInt(parts[1], 10);
+      const periodStr = `${pYear}-${String(pMonth).padStart(2, '0')}`;
+      query += " AND (period = ? OR tanggal LIKE ? OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?)))";
+      params.push(periodStr, `${periodStr}%`, pYear, pMonth);
+    } else if (month && month !== 'all' && year && year !== 'all') {
       const monthStr = String(month).padStart(2, '0');
-      const monthPattern = `${year}-${monthStr}%`;
-      query += ' AND (tanggal LIKE ? OR (YEAR(created_at) = ? AND MONTH(created_at) = ?))';
-      params.push(monthPattern, Number(year), Number(month));
+      const periodStr = `${year}-${monthStr}`;
+      const monthPattern = `${periodStr}%`;
+      query += " AND (period = ? OR tanggal LIKE ? OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?)))";
+      params.push(periodStr, monthPattern, Number(year), Number(month));
     } else {
       if (month && month !== 'all') {
         const monthStr = String(month).padStart(2, '0');
-        query += ' AND (tanggal LIKE ? OR MONTH(created_at) = ?)';
-        params.push(`%-${monthStr}-%`, Number(month));
+        query += ' AND (period LIKE ? OR tanggal LIKE ? OR MONTH(created_at) = ?)';
+        params.push(`%-${monthStr}`, `%-${monthStr}-%`, Number(month));
       }
       if (year && year !== 'all') {
-        query += ' AND (tanggal LIKE ? OR YEAR(created_at) = ?)';
-        params.push(`${year}-%`, Number(year));
+        query += ' AND (period LIKE ? OR tanggal LIKE ? OR YEAR(created_at) = ?)';
+        params.push(`${year}-%`, `${year}-%`, Number(year));
       }
     }
 
@@ -2029,6 +2092,28 @@ app.post('/api/inspections', async (req, res) => {
       }
       if (!hfo_name && !tool_pusher_name) {
         return res.status(400).json({ success: false, message: 'Validasi Gagal: Nama penanggung jawab (Pemeriksa atau Tool Pusher) wajib diisi sebelum submit final!' });
+      }
+
+      // Validasi Wajib Tanda Tangan Digital HFO & Toolpusher
+      const sigs = payload.meta?.signatures || payload.signatures || {};
+      const getSig = (sig) => {
+        if (!sig) return '';
+        if (typeof sig === 'string') return sig.trim();
+        if (typeof sig === 'object' && sig.image) return String(sig.image).trim();
+        return '';
+      };
+      const hfoSig = getSig(sigs.hfo) || getSig(sigs.wfo);
+      const tpSig = getSig(sigs.toolpush) || getSig(sigs.derickman);
+
+      const isAdmin = authenticatedUser 
+        ? (authenticatedUser.role === 'admin' || authenticatedUser.username === 'admin_besmindo') 
+        : (payload.user_role === 'admin' || payload.role === 'admin' || payload.is_admin === true);
+
+      if (!isAdmin && (!hfoSig || !tpSig)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Gagal menyimpan! Tanda tangan HFO dan Toolpusher wajib diisi sebagai bukti validasi inspeksi.'
+        });
       }
     }
 

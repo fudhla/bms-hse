@@ -88,7 +88,7 @@ const ADMIN_MENU_GROUPS = [
 const RIG_FORM_MENU = [
   { id: 'apar',      label: 'Inspeksi APAR',                  icon: Flame,       path: '/apar' },
   { id: 'apd',       label: 'Inspeksi APD (PPE)',             icon: ShieldAlert, path: '/apd' },
-  { id: 'eyewash',   label: 'Inspeksi Eye Wash',              icon: Eye,         path: '/eyewash' },
+  { id: 'eyewash',   label: 'Inspeksi Eye Wash & Shower',     icon: Eye,         path: '/eyewash' },
   { id: 'firstaid',  label: 'Inspeksi Kotak P3K',             icon: HeartPulse,  path: '/firstaid' },
   { id: 'harness',   label: 'Inspeksi Full Body Harness',     icon: Shield,      path: '/harness' },
   { id: 'oxigent',   label: 'Inspeksi Tabung Oksigen',        icon: Cylinder,    path: '/oxigent' },
@@ -281,7 +281,7 @@ export default function Sidebar({
         </div>
 
         {/* ── 3. Navigation Menus dengan Pengelompokan Estetik ── */}
-        <nav className="flex-1 min-h-0 overflow-y-auto py-3 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-3 space-y-1">
           {isAdmin ? (
             /* ── ADMIN NAV: 3 KELOMPOK (ANALISIS, INSPEKSI, PENGATURAN) ── */
             <>

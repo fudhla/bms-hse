@@ -72,7 +72,63 @@ export const HARNESS_SIGNATURE_ROLES = [
   }
 ];
 
-export default function DigitalSignatureSection({
+/**
+ * Helper Validasi Wajib Tanda Tangan Digital HFO & Toolpusher (atau Derickman)
+ * Digunakan sebelum proses submit / penguncian formulir inspeksi.
+ */
+export const validateInspectionSignatures = (signatures, targetRef = null) => {
+  const sigs = signatures || {};
+  const getSigImage = (sig) => {
+    if (!sig) return '';
+    if (typeof sig === 'string') return sig.trim();
+    if (typeof sig === 'object' && sig.image) return String(sig.image).trim();
+    return '';
+  };
+
+  const hfoSig = getSigImage(sigs.hfo) || getSigImage(sigs.wfo);
+  const toolpushSig = getSigImage(sigs.toolpush) || getSigImage(sigs.derickman);
+
+  if (!hfoSig || !toolpushSig) {
+    const errorMsg = 'Gagal menyimpan! Tanda tangan HFO dan Toolpusher wajib diisi sebagai bukti validasi inspeksi.';
+    
+    // Auto-scroll ke bagian tanda tangan jika gagal
+    if (targetRef?.current) {
+      targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      targetRef.current.classList.add('ring-4', 'ring-rose-500/50', 'rounded-2xl', 'transition-all', 'duration-500');
+      setTimeout(() => {
+        targetRef.current?.classList.remove('ring-4', 'ring-rose-500/50', 'rounded-2xl');
+      }, 2500);
+    } else if (typeof document !== 'undefined') {
+      const allSections = document.querySelectorAll('#digital-signature-section, [data-signature-section]');
+      let visibleEl = null;
+      for (const el of allSections) {
+        if (el.offsetParent !== null || el.getClientRects().length > 0) {
+          visibleEl = el;
+          break;
+        }
+      }
+      const elToScroll = visibleEl || allSections[0];
+      if (elToScroll) {
+        elToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        elToScroll.classList.add('ring-4', 'ring-rose-500/50', 'rounded-2xl', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          elToScroll.classList.remove('ring-4', 'ring-rose-500/50', 'rounded-2xl');
+        }, 2500);
+      }
+    }
+
+    return {
+      isValid: false,
+      message: errorMsg,
+      missingHfo: !hfoSig,
+      missingToolpusher: !toolpushSig
+    };
+  }
+
+  return { isValid: true };
+};
+
+const DigitalSignatureSection = React.forwardRef(function DigitalSignatureSection({
   signatures = {},
   onSignatureChange,
   isLocked = false,
@@ -81,13 +137,14 @@ export default function DigitalSignatureSection({
   defaultSignerNames = {},
   roles = DEFAULT_SIGNATURE_ROLES,
   instructionText = null
-}) {
+}, ref) {
   // Modal State
   const [activeModalRole, setActiveModalRole] = useState(null);
   const [signerName, setSignerName] = useState('');
   const [inkColor, setInkColor] = useState('#1e3a8a'); // #1e3a8a (Navy resmi) atau #0f172a (Hitam)
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   const canvasRef = useRef(null);
   const drawingStateRef = useRef(false);
@@ -253,14 +310,16 @@ export default function DigitalSignatureSection({
     if (!canvas || !activeModalRole) return;
 
     if (!signerName.trim()) {
-      alert('Silakan isi Nama Penanda Tangan terlebih dahulu.');
+      setModalError('Silakan ketikkan Nama Penanda Tangan terlebih dahulu.');
       return;
     }
 
     if (!hasDrawn) {
-      alert('Silakan bubuhkan goresan tanda tangan pada kotak pad.');
+      setModalError('Silakan bubuhkan goresan tanda tangan pada kotak pad.');
       return;
     }
+
+    setModalError('');
 
     const dataUrl = canvas.toDataURL('image/png');
     const now = new Date();
@@ -294,7 +353,12 @@ export default function DigitalSignatureSection({
   };
 
   return (
-    <div className="space-y-3 pt-3">
+    <div 
+      ref={ref}
+      id="digital-signature-section"
+      data-signature-section="true"
+      className="space-y-3 pt-3 scroll-mt-24"
+    >
       {/* Header Bagian Tanda Tangan */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 pb-2 border-b border-slate-300">
         <div>
@@ -412,7 +476,10 @@ export default function DigitalSignatureSection({
                 {canEdit && (
                   <button
                     type="button"
-                    onClick={() => setActiveModalRole(role)}
+                    onClick={() => {
+                      setActiveModalRole(role);
+                      setModalError('');
+                    }}
                     className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] transition border border-blue-200 cursor-pointer"
                   >
                     <Edit3 className="w-2.5 h-2.5" />
@@ -458,6 +525,14 @@ export default function DigitalSignatureSection({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Inline Alert Error Validasi Modal */}
+            {modalError && (
+              <div className="mx-3.5 sm:mx-4 mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             {/* Form Input Nama Penanda Tangan */}
             <div className="p-3.5 sm:p-4 space-y-3 text-xs border-b border-slate-100">
@@ -575,4 +650,6 @@ export default function DigitalSignatureSection({
       )}
     </div>
   );
-}
+});
+
+export default DigitalSignatureSection;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePeriod } from '../context/PeriodContext';
 import {
   FileSpreadsheet,
   FileDown,
@@ -53,8 +54,9 @@ const MONTH_LIST = [
 const YEAR_LIST = ['2024', '2025', '2026', '2027'];
 
 export default function ReportPage() {
-  const [selectedMonth, setSelectedMonth] = useState('10'); // Oktober
-  const [selectedYear, setSelectedYear] = useState('2026');
+  const { selectedMonth: globalMonth, selectedYear: globalYear } = usePeriod();
+  const [selectedMonth, setSelectedMonth] = useState(() => String(globalMonth || '10'));
+  const [selectedYear, setSelectedYear] = useState(() => String(globalYear || '2026'));
   const [selectedRig, setSelectedRig] = useState('Semua Rig (20 Rig)');
   const [selectedForm, setSelectedForm] = useState('all');
 

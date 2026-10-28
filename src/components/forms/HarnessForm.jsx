@@ -1,103 +1,110 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowLeft, 
-  Save, 
-  CheckCircle, 
-  AlertCircle, 
-  RefreshCw, 
   Plus, 
   Trash2, 
-  Upload, 
-  ZoomIn, 
+  CheckCircle, 
+  AlertCircle, 
   X, 
-  RotateCcw, 
-  Image as ImageIcon 
+  Upload, 
+  Image as ImageIcon,
+  ZoomIn
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { useInspectionForm } from '../../hooks/useInspectionForm';
+import { useAuth } from '../../context/AuthContext';
 import { generateHarnessPDF, generateHarnessExcel } from '../../utils/exportUtils';
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection, { HARNESS_SIGNATURE_ROLES } from './DigitalSignatureSection';
 
-const CHECKLIST_SECTIONS = [
+// 9 GAMBAR REFERENSI BAWAAN GLOBAL (STATIC ASSETS DI /public/images/harness/)
+export const defaultHarnessImages = {
+  1: '/images/harness/webbing.png',
+  2: '/images/harness/snap-hooks.png',
+  3: '/images/harness/d-rings.png',
+  4: '/images/harness/buckles.png',
+  5: '/images/harness/sewing.png',
+  6: '/images/harness/rope.png',
+  7: '/images/harness/energy-absorber.png',
+  8: '/images/harness/trauma-strap.png',
+  9: '/images/harness/labelling.png'
+};
+
+export const CHECKLIST_SECTIONS = [
   {
     id: 1,
     komponen: 'WEBBING',
+    image: defaultHarnessImages[1],
     items: [
-      'Terpotong atau Sobek',
-      'Berubah bentuk / Abrasi karena bergesekan',
-      'Keregangan yang berlebihan',
-      'Rusak karena panas, korosi atau zat kimia'
+      'Ada yang terpotong / sobek / terurai',
+      'Terkena panas / percikan api las',
+      'Ada bekas bahan kimia / asam / pelarut',
+      'Terdapat modifikasi yang tidak standar'
     ]
   },
   {
     id: 2,
     komponen: 'SNAP HOOKS & KARABINER',
+    image: defaultHarnessImages[2],
     items: [
-      'Distorsi ( berubah bentuk )',
-      'Keretakan',
-      'Beban berlebih',
-      'Safety Lock berfungsi dengan baik',
-      'Kondisi pegas Safety Lock yang melemah',
-      'Safety Lock yang tidak presisi',
-      'Korosi / keropos',
-      'Bebas dari kotoran dan penyumbatan'
+      'Ada bengkok / retak / korosi',
+      'Penguncian tidak bekerja dengan baik',
+      'Kait pengaman (keeper) longgar / rusak',
+      'Karat berlebih'
     ]
   },
   {
     id: 3,
     komponen: 'D - RINGS',
+    image: defaultHarnessImages[3],
     items: [
-      'D - Ring bergerak baik pada Roller',
-      'Keretakan atau memipih',
-      'Distorsi ( berubah bentuk ) atau aus',
-      'Korosi / keropos',
-      'Beban berlebih'
+      'Bengkok / retak / aus',
+      'Berkarat berlebihan',
+      'Posisi bergeser tidak normal'
     ]
   },
   {
     id: 4,
     komponen: 'BUCKLETS & ADJUSTERS\n(Kancing Sabuk Pengaman)',
+    image: defaultHarnessImages[4],
     items: [
-      'Distorsi ( berubah bentuk ) atau aus',
-      'Keretakan atau memipih',
-      'Korosi / keropos',
-      'Bengkok',
-      'Open Rollers'
+      'Bengkok / retak / aus',
+      'Mekanisme penguncian aus / longgar',
+      'Bagian kancing hilang'
     ]
   },
   {
     id: 5,
     komponen: 'SEWING\n(Jahitan)',
+    image: defaultHarnessImages[5],
     items: [
-      'Putus atau sobek',
-      'Benang melapuk karena panas, karat, jamur',
-      'Perbaikan sendiri / tanpa lisensi'
+      'Jahitan putus / robek / terlepas',
+      'Benang lapuk / aus'
     ]
   },
   {
     id: 6,
-    komponen: 'ROPE (Tali)',
+    komponen: 'ROPE\n(Tali)',
+    image: defaultHarnessImages[6],
     items: [
-      'Putus',
-      'Tegangan yang berlebih',
-      'Pelapukan karena zat kimia',
-      'Pelapukan karena panas, karat, sinar matahari',
-      'Kerusakan atau retak pada thimbles'
+      'Serat putus / terkikis',
+      'Diameter tali mengecil / gepeng',
+      'Kaku karena zat kimia / panas'
     ]
   },
   {
     id: 7,
     komponen: 'ENERGY ABSORBER\n(Peredam Kejut)',
+    image: defaultHarnessImages[7],
     items: [
-      'Peredam kejut belum mengalami peregangan',
-      'Perbaikan tanpa lisensi'
+      'Telah terbuka / pernah menahan jatuh',
+      'Sobek / basah / lapuk',
+      'Cover pelindung hilang / rusak'
     ]
   },
   {
     id: 8,
     komponen: 'BLOOD SUSPENSION TRAUMA',
+    image: defaultHarnessImages[8],
     isBlue: true,
     items: [
       'Putus atau robek',
@@ -108,6 +115,7 @@ const CHECKLIST_SECTIONS = [
   {
     id: 9,
     komponen: 'LABELLING\n(Sertifikasi)',
+    image: defaultHarnessImages[9],
     items: [
       'Tercantum nomor seri dan mudah dibaca',
       'Label produksi',
@@ -126,6 +134,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
   // Metadata Utama
   const [meta, setMeta] = useState({
     rigNo: overrideRigNo || (isKaryawan && assignedRig ? assignedRig : ''),
+    tanggal: new Date().toISOString().split('T')[0],
     jenisAlat: 'Full Body Harnesses',
     derrickmanName: '',
     toolPusherName: '',
@@ -135,8 +144,21 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     signatures: {}
   });
 
-  // State Foto Komponen (Dictionary: { [sectionId]: base64DataUrl })
-  const [componentPhotos, setComponentPhotos] = useState({});
+  // State Foto Hasil Upload Pengguna: { [sectionId]: base64DataUrl }
+  const [userUploads, setUserUploads] = useState({});
+
+  // Helper Foto Aktif (Menimpa default dengan upload user)
+  const getActivePhotos = () => ({
+    1: userUploads[1] || defaultHarnessImages[1],
+    2: userUploads[2] || defaultHarnessImages[2],
+    3: userUploads[3] || defaultHarnessImages[3],
+    4: userUploads[4] || defaultHarnessImages[4],
+    5: userUploads[5] || defaultHarnessImages[5],
+    6: userUploads[6] || defaultHarnessImages[6],
+    7: userUploads[7] || defaultHarnessImages[7],
+    8: userUploads[8] || defaultHarnessImages[8],
+    9: userUploads[9] || defaultHarnessImages[9]
+  });
 
   // State Modal Zoom Foto
   const [zoomModal, setZoomModal] = useState({
@@ -154,12 +176,8 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     }
   }, [overrideRigNo, isKaryawan, assignedRig]);
 
-  // State Unit (S/N) - Default 6 kolom inspeksi berdampingan
+  // State Unit (S/N) - Inisialisasi 2 unit inspeksi awal agar pas di layar tanpa horizontal scrollbar
   const [units, setUnits] = useState([
-    { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} },
-    { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} },
-    { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} },
-    { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} },
     { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} },
     { sn: '', lokasi: '', tanggal: new Date().toISOString().split('T')[0], checks: {} }
   ]);
@@ -185,15 +203,21 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     overrideRigNo,
     viewMonth,
     viewYear,
-    meta: { ...meta, hfoName: meta.derrickmanName, toolPusherName: meta.toolPusherName || meta.wsrName, rekomendasi: meta.remark },
+    meta: { 
+      ...meta, 
+      hfoName: meta.wsrName || meta.hfoName, 
+      toolPusherName: meta.toolPusherName, 
+      rekomendasi: meta.remark 
+    },
     setMeta: (updater) => {
       setMeta(prev => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
         return {
           ...next,
-          derrickmanName: next.hfoName || next.derrickmanName,
-          toolPusherName: next.toolPusherName || next.toolPusherName,
-          remark: next.rekomendasi || next.remark
+          derrickmanName: next.derrickmanName || prev.derrickmanName,
+          toolPusherName: next.toolPusherName || prev.toolPusherName,
+          wsrName: next.hfoName || next.wsrName || prev.wsrName,
+          remark: next.rekomendasi || next.remark || prev.remark
         };
       });
     },
@@ -201,17 +225,19 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     setItems: setUnits,
     extraPayload: { 
       units_data: units,
-      component_photos: componentPhotos,
+      component_photos: getActivePhotos(),
+      user_uploads: userUploads,
       wsr_name: meta.wsrName
     }
   });
 
   const handleExportHarnessPdf = async () => {
     try {
+      const photos = getActivePhotos();
       const payload = {
         ...buildExportPayload(),
-        component_photos: componentPhotos,
-        componentPhotos: componentPhotos,
+        component_photos: photos,
+        componentPhotos: photos,
         hfo_name: meta.wsrName || meta.hfoName || meta.signatures?.hfo?.name || meta.signatures?.wfo?.name,
         derrickman_name: meta.derrickmanName || meta.userName || meta.signatures?.derickman?.name || meta.signatures?.toolpush?.name
       };
@@ -223,10 +249,11 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
 
   const handleExportHarnessExcel = async () => {
     try {
+      const photos = getActivePhotos();
       const payload = {
         ...buildExportPayload(),
-        component_photos: componentPhotos,
-        componentPhotos: componentPhotos
+        component_photos: photos,
+        componentPhotos: photos
       };
       await generateHarnessExcel(payload);
     } catch (err) {
@@ -237,9 +264,9 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
   // Restore foto komponen dari database saat data awal selesai dimuat
   useEffect(() => {
     if (initialLoaded && initialData) {
-      const savedPhotos = initialData.form_data?.component_photos || initialData.form_data?.componentPhotos;
+      const savedPhotos = initialData.form_data?.component_photos || initialData.form_data?.componentPhotos || initialData.form_data?.user_uploads;
       if (savedPhotos && typeof savedPhotos === 'object') {
-        setComponentPhotos(savedPhotos);
+        setUserUploads(savedPhotos);
       }
     }
   }, [initialLoaded, initialData]);
@@ -280,7 +307,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     setUnits(units.filter((_, idx) => idx !== index));
   };
 
-  // Handler Upload Foto Komponen (Kompresi ke Base64 dengan batas ukuran proporsional)
+  // Handler Upload Foto Komponen (Menimpa default dengan Base64 terkompresi)
   const handlePhotoUpload = (sectionId, file) => {
     if (isLocked) return;
     if (!file) return;
@@ -294,7 +321,6 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        // Kompresi gambar ke canvas (max dimensi 800px untuk performa responsif & hemat penyimpanan)
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
@@ -312,9 +338,10 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-        setComponentPhotos(prev => ({
+        // Menimpa (override) gambar default khusus untuk baris ini
+        setUserUploads(prev => ({
           ...prev,
           [sectionId]: compressedBase64
         }));
@@ -322,19 +349,6 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  };
-
-  // Handler Reset / Hapus Foto
-  const handleResetPhoto = (sectionId, e) => {
-    e.stopPropagation();
-    if (isLocked) return;
-    if (window.confirm('Hapus foto komponen ini dan kembalikan ke default?')) {
-      setComponentPhotos(prev => {
-        const copy = { ...prev };
-        delete copy[sectionId];
-        return copy;
-      });
-    }
   };
 
   // Buka Modal Zoom
@@ -357,28 +371,20 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
   const handleSignatureChange = (roleKey, sigData) => {
     if (isLocked && !isAdmin) return;
     setMeta(prev => {
-      const newSignatures = { ...(prev.signatures || {}) };
-      if (sigData) {
-        newSignatures[roleKey] = sigData;
-        if (roleKey === 'hfo') newSignatures.wfo = sigData;
-        if (roleKey === 'derickman') newSignatures.toolpush = sigData;
-      } else {
-        delete newSignatures[roleKey];
-        if (roleKey === 'hfo') delete newSignatures.wfo;
-        if (roleKey === 'derickman') delete newSignatures.toolpush;
-      }
-      const next = { ...prev, signatures: newSignatures };
-      if (sigData?.name) {
-        if (roleKey === 'hfo' || roleKey === 'wfo') {
-          next.wsrName = sigData.name;
-          next.hfoName = sigData.name;
-        } else if (roleKey === 'derickman' || roleKey === 'user' || roleKey === 'toolpush') {
-          next.derrickmanName = sigData.name;
-          next.userName = sigData.name;
-          next.toolPusherName = sigData.name;
+      const currentSignatures = prev.signatures || {};
+      const currentSigForRole = currentSignatures[roleKey] || {};
+      
+      return {
+        ...prev,
+        signatures: {
+          ...currentSignatures,
+          [roleKey]: {
+            ...currentSigForRole,
+            ...sigData,
+            signedAt: sigData.image ? (currentSigForRole.signedAt || new Date().toISOString()) : null
+          }
         }
-      }
-      return next;
+      };
     });
   };
 
@@ -388,73 +394,84 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
   };
 
   return (
-    <div className="form-sheet rounded-xl border border-slate-300 shadow-md p-4 sm:p-6 max-w-[1600px] mx-auto text-xs font-sans">
+    <div className="form-sheet rounded-xl border border-slate-300 shadow-md p-4 sm:p-6 max-w-[1400px] mx-auto text-xs font-sans bg-white">
       {/* Header Bar Kontrol & Auto-Save / Export */}
       <FormActionHeader
-        onBack={onBack}
+        title="Formulir Inspeksi Full Body Harness & Lanyard"
         docNo="BMSD/17/FO/HSE/08/26"
         status={status}
         saveState={saveState}
         isLocked={isLocked}
         isAdmin={isAdmin}
         adminEditMode={adminEditMode}
+        onBack={onBack}
         onExportPdf={handleExportHarnessPdf}
         onExportExcel={handleExportHarnessExcel}
       />
 
-      {/* Alert Status */}
-      {message.text && (
-        <div className={`p-3 rounded-lg mb-4 flex items-center space-x-2 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+      {/* Alert Status Banner */}
+      {message && message.text && (
+        <div className={`p-3 rounded-lg mb-4 flex items-center space-x-2 ${
+          message.type === 'success' 
+            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+            : 'bg-rose-50 text-rose-800 border border-rose-200'
+        }`}>
           {message.type === 'success' ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
           <span className="font-semibold">{message.text}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* KOP FORMULIR FISIK */}
-        <div className="border-2 border-slate-800 text-slate-900">
-          <div className="grid grid-cols-12 divide-x-2 divide-y-2 sm:divide-y-0 divide-slate-800">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* KOP FORMULIR FISIK (STANDAR ENTERPRISE PT BESMINDO) */}
+        <div className="border border-slate-300 rounded-xl overflow-hidden shadow-xs text-slate-900 bg-white">
+          <div className="grid grid-cols-12 divide-x divide-y sm:divide-y-0 divide-slate-300 items-center">
             {/* Logo Section */}
-            <div className="col-span-12 sm:col-span-3 p-2.5 flex items-center justify-center bg-white">
+            <div className="col-span-12 sm:col-span-3 p-3 flex items-center justify-center bg-white">
               <img 
                 src="/logo-baru.png" 
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/besmindo-logo.png';
+                }}
                 alt="PT. Besmindo Materi Sewatama" 
                 className="max-w-full max-h-14 sm:max-h-16 h-auto object-contain"
               />
             </div>
 
             {/* Title Section */}
-            <div className="col-span-12 sm:col-span-6 p-2 text-center flex flex-col justify-center bg-slate-50">
-              <h1 className="font-extrabold text-xs sm:text-sm text-slate-900 underline">
-                Form Inspeksi Alat Untuk Bekerja Diketinggian
+            <div className="col-span-12 sm:col-span-6 p-3 text-center flex flex-col justify-center bg-slate-50/80">
+              <h1 className="font-extrabold text-sm sm:text-base text-slate-900 uppercase tracking-wide">
+                PT. BESMINDO MATERI SEWATAMA
               </h1>
-              <p className="font-bold text-xs text-slate-800 mt-0.5">
-                ( Harnesses & Lanyards CAMP )
+              <p className="font-bold text-xs text-blue-700 uppercase mt-0.5">
+                INSPEKSI/V&V FULL BODY HARNESS & LANYARD
+              </p>
+              <p className="font-semibold text-xs text-slate-600 italic">
+                SAFETY HARNESS & LANYARD MONTHLY INSPECTION FORM
               </p>
             </div>
 
             {/* Meta Document Section */}
-            <div className="col-span-12 sm:col-span-3 text-[10px] font-semibold divide-y divide-slate-800">
-              <div className="flex justify-between p-1">
-                <span>No. Fomulir</span>
-                <span className="font-mono font-bold">: BMSD/17/FO/HSE/08/26</span>
+            <div className="col-span-12 sm:col-span-3 text-[10px] font-semibold divide-y divide-slate-300 bg-white">
+              <div className="flex justify-between p-2">
+                <span className="text-slate-500">No Formulir</span>
+                <span className="font-mono font-bold text-slate-800">: BMSD/17/FO/HSE/08/26</span>
               </div>
-              <div className="flex justify-between p-1">
-                <span>No. Revisi</span>
-                <span className="font-mono font-bold">: # 06</span>
+              <div className="flex justify-between p-2">
+                <span className="text-slate-500">No. Revisi</span>
+                <span className="font-mono font-bold text-slate-800">: 01</span>
               </div>
-              <div className="flex justify-between p-1">
-                <span>Tanggal Efektif</span>
-                <span className="font-mono font-bold">: 7 Agustus 2026</span>
+              <div className="flex justify-between p-2">
+                <span className="text-slate-500">Tanggal Efektif</span>
+                <span className="font-mono font-bold text-slate-800">: 15 Agustus 2026</span>
               </div>
             </div>
           </div>
 
-          {/* Sub Header (Rig & Jenis Alat) */}
-          <div className="border-t-2 border-slate-800 p-2 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold text-xs">
-            <div className="flex items-center space-x-2">
-              <label className="w-20">Rig</label>
-              <span>:</span>
+          {/* Sub Header (Rig, Tanggal, Derrickman, Toolpusher) */}
+          <div className="border-t border-slate-300 p-3.5 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Rig No</label>
               <input
                 type="text"
                 name="rigNo"
@@ -462,163 +479,202 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
                 onChange={handleMetaChange}
                 readOnly={isKaryawan}
                 placeholder="Rig No"
-                className={`border-b border-slate-400 bg-transparent px-1 py-0.5 font-bold text-blue-900 focus:outline-none ${
-                  isKaryawan ? 'bg-slate-100 cursor-not-allowed text-slate-700' : ''
+                className={`w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-blue-700 bg-white focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  isKaryawan ? 'bg-slate-100 cursor-not-allowed opacity-90' : ''
                 }`}
                 required
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <label className="w-20">Jenis Alat</label>
-              <span>:</span>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Tanggal Pemeriksaan</label>
+              <input
+                type="date"
+                name="tanggal"
+                value={meta.tanggal}
+                onChange={handleMetaChange}
+                disabled={isLocked}
+                className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 transition-colors"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Derrickman</label>
               <input
                 type="text"
-                name="jenisAlat"
-                value={meta.jenisAlat}
+                name="derrickmanName"
+                value={meta.derrickmanName}
                 onChange={handleMetaChange}
-                placeholder="Full Body Harnesses"
-                className="border-b border-slate-400 bg-transparent px-1 py-0.5 font-bold focus:outline-none"
+                disabled={isLocked}
+                placeholder="Nama Derrickman"
+                className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 transition-colors"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Toolpusher</label>
+              <input
+                type="text"
+                name="toolPusherName"
+                value={meta.toolPusherName}
+                onChange={handleMetaChange}
+                disabled={isLocked}
+                placeholder="Nama Toolpusher"
+                className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 transition-colors"
                 required
               />
             </div>
           </div>
+
+          {/* Sub Header Tambahan: HFO & Catatan Rekomendasi */}
+          <div className="border-t border-slate-200 p-3 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-3 text-xs">
+            <div className="md:col-span-4">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">HFO (HES Field Officer)</label>
+              <input
+                type="text"
+                name="wsrName"
+                value={meta.wsrName}
+                onChange={handleMetaChange}
+                disabled={isLocked}
+                placeholder="Nama HES Field Officer..."
+                className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-blue-500 transition-colors"
+              />
+            </div>
+            <div className="md:col-span-8">
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Catatan / Rekomendasi</label>
+              <input
+                type="text"
+                name="remark"
+                value={meta.remark}
+                onChange={handleMetaChange}
+                disabled={isLocked}
+                placeholder="Tuliskan catatan hasil inspeksi atau tindakan perbaikan jika ada..."
+                className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-blue-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Legend Banner Keterangan Symbol */}
+          <div className="border-t border-slate-200 p-2.5 bg-slate-100/70 text-center text-xs font-medium text-slate-700 flex flex-wrap items-center justify-center gap-3">
+            <span className="font-bold text-slate-800">Keterangan:</span>
+            <span className="inline-flex items-center space-x-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+              <span className="font-black text-emerald-600 text-sm">✓</span>
+              <span>= Kondisi baik dan sesuai standar</span>
+            </span>
+            <span className="inline-flex items-center space-x-1.5 text-rose-800 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">
+              <span className="font-black text-rose-600 text-sm">✕</span>
+              <span>= Rusak / perlu perbaikan</span>
+            </span>
+          </div>
         </div>
 
-        {/* Tombol Tambah Kolom S/N */}
-        <div className="flex justify-between items-center">
-          <p className="text-[11px] text-slate-500 italic">
-            * Geser tabel ke kanan jika menginspeksi banyak unit secara bersamaan. Klik pada gambar untuk zoom.
-          </p>
-          <button
-            type="button"
-            onClick={addUnitColumn}
-            className="flex items-center space-x-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-bold transition"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Kolom S/N Unit</span>
-          </button>
+        {/* Action Bar Header Tabel (Tambah Unit) */}
+        <div className="flex justify-between items-center py-2">
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-700 text-xs">Daftar Unit Inspeksi Full Body Harness</span>
+            <span className="text-[11px] text-slate-500">({units.length} Unit)</span>
+          </div>
+          {!isLocked && (
+            <button
+              type="button"
+              onClick={addUnitColumn}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Unit (S/N)</span>
+            </button>
+          )}
         </div>
 
-        {/* TABEL CHECKLIST INSPEKSI FISIK MULTI-S/N */}
-        <div className="overflow-x-auto border-2 border-slate-800 shadow-sm rounded-sm">
-          <table className="w-full border-collapse text-[10px] text-slate-900">
+        {/* TABEL CHECKLIST INSPEKSI HARNESS (Clean Modern Table - Tanpa Scrollbar Horizontal) */}
+        <div className="rounded-xl border border-slate-300 shadow-xs bg-white overflow-hidden">
+          <table className="w-full text-slate-700 border-collapse table-auto text-xs">
             <thead>
-              {/* Row 1: Header S/N */}
-              <tr className="bg-emerald-700 text-white font-bold text-center border-b border-slate-800">
-                <th rowSpan={4} className="border-r border-slate-800 p-1 w-6 bg-slate-200 text-slate-900">No</th>
-                <th rowSpan={4} className="border-r border-slate-800 p-1 w-32 bg-slate-200 text-slate-900">Komponen</th>
-                <th rowSpan={4} className="border-r border-slate-800 p-1 w-44 bg-slate-200 text-slate-900">Jenis Kerusakan</th>
-                <th rowSpan={4} className="border-r border-slate-800 p-1 w-28 bg-slate-200 text-slate-900">Gambar / Foto</th>
-                
-                {/* Dynamically Render S/N Columns Header */}
+              {/* Header Baris 1: Kolom Utama & Kolom Unit */}
+              <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider border-b border-slate-300 text-center">
+                <th rowSpan={2} className="border-r border-slate-200 px-2 py-3 w-10">NO</th>
+                <th rowSpan={2} className="border-r border-slate-200 px-3 py-3 w-40 text-left">KOMPONEN</th>
+                <th rowSpan={2} className="border-r border-slate-200 px-3 py-3 text-left">
+                  JENIS KERUSAKAN / ITEM CHECKLIST
+                </th>
+                <th rowSpan={2} className="border-r border-slate-200 px-2 py-3 w-36 min-w-[130px] text-center bg-slate-50/80">
+                  GAMBAR / FOTO
+                </th>
                 {units.map((unit, uIdx) => (
-                  <th key={uIdx} colSpan={2} className="border-r border-slate-800 p-1 bg-emerald-700 relative">
-                    <div className="flex justify-between items-center px-1">
-                      <span>S/N</span>
-                      {units.length > 1 && (
+                  <th
+                    key={uIdx}
+                    colSpan={2}
+                    className="border-r border-slate-200 px-2 py-2 bg-blue-50/60"
+                  >
+                    <div className="flex items-center justify-between px-1 mb-1">
+                      <span className="font-extrabold text-[11px] text-blue-900">Unit #{uIdx + 1}</span>
+                      {!isLocked && units.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeUnitColumn(uIdx)}
-                          className="text-emerald-200 hover:text-white"
-                          title="Hapus Kolom S/N Ini"
+                          className="p-1 rounded text-rose-500 hover:bg-rose-100 hover:text-rose-700 transition"
+                          title="Hapus Kolom Unit Ini"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
+                    </div>
+                    <div className="space-y-1 font-normal text-[11px]">
+                      <input
+                        type="text"
+                        placeholder="S/N Unit..."
+                        value={unit.sn}
+                        onChange={(e) => handleUnitMetaChange(uIdx, 'sn', e.target.value)}
+                        disabled={isLocked}
+                        className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-slate-800 disabled:bg-slate-100 font-bold text-center text-xs focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Lokasi..."
+                        value={unit.lokasi}
+                        onChange={(e) => handleUnitMetaChange(uIdx, 'lokasi', e.target.value)}
+                        disabled={isLocked}
+                        className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-slate-800 disabled:bg-slate-100 text-center text-xs focus:ring-1 focus:ring-blue-500"
+                      />
                     </div>
                   </th>
                 ))}
               </tr>
 
-              {/* Row 2: Input S/N Value */}
-              <tr className="bg-emerald-50 border-b border-slate-800">
-                {units.map((unit, uIdx) => (
-                  <td key={uIdx} colSpan={2} className="border-r border-slate-800 p-1">
-                    <input
-                      type="text"
-                      value={unit.sn}
-                      onChange={(e) => handleUnitMetaChange(uIdx, 'sn', e.target.value)}
-                      placeholder={`S/N ${uIdx + 1}`}
-                      className="w-full text-center font-bold text-emerald-900 bg-white border border-emerald-300 rounded px-1 py-0.5 focus:outline-none"
-                    />
-                  </td>
-                ))}
-              </tr>
-
-              {/* Row 3: Input Lokasi */}
-              <tr className="bg-slate-100 border-b border-slate-800 text-center font-bold">
-                {units.map((unit, uIdx) => (
-                  <React.Fragment key={uIdx}>
-                    <td className="border-r border-slate-300 p-1 w-12 bg-slate-200">Lokasi</td>
-                    <td className="border-r border-slate-800 p-1 w-16">
-                      <input
-                        type="text"
-                        value={unit.lokasi}
-                        onChange={(e) => handleUnitMetaChange(uIdx, 'lokasi', e.target.value)}
-                        placeholder="Lokasi"
-                        className="w-full text-center bg-transparent border-b border-slate-300 focus:outline-none font-semibold"
-                      />
-                    </td>
-                  </React.Fragment>
-                ))}
-              </tr>
-
-              {/* Row 4: Input Tanggal & Kondisi OK/BAD */}
-              <tr className="bg-slate-100 border-b-2 border-slate-800 text-center font-bold">
-                {units.map((unit, uIdx) => (
-                  <React.Fragment key={uIdx}>
-                    <td className="border-r border-slate-300 p-1 bg-slate-200">Tanggal</td>
-                    <td className="border-r border-slate-800 p-1">
-                      <input
-                        type="date"
-                        value={unit.tanggal}
-                        onChange={(e) => handleUnitMetaChange(uIdx, 'tanggal', e.target.value)}
-                        className="w-full text-[9px] bg-transparent border-b border-slate-300 focus:outline-none"
-                      />
-                    </td>
-                  </React.Fragment>
-                ))}
-              </tr>
-
-              {/* Sub Header Row 5: OK / BAD Label */}
-              <tr className="bg-slate-200 border-b-2 border-slate-800 font-bold text-center">
-                <td colSpan={4} className="p-1 border-r border-slate-800 text-right pr-4 uppercase tracking-wider text-[9px]">
-                  Kondisi Peralatan
-                </td>
+              {/* Header Baris 2: Sub-Kolom Centang / Silang */}
+              <tr className="bg-slate-50 border-b border-slate-300 font-bold text-center text-xs">
                 {units.map((_, uIdx) => (
                   <React.Fragment key={uIdx}>
-                    <th className="border-r border-slate-400 p-0.5 w-7 bg-emerald-100 text-emerald-800 font-black text-xs" title="OK / Ceklis">✓</th>
-                    <th className="border-r border-slate-800 p-0.5 w-7 bg-rose-100 text-rose-800 font-black text-xs" title="BAD / Silang">✗</th>
+                    <th className="border-r border-slate-200 py-1.5 w-10 text-emerald-700 bg-emerald-50/80 font-mono text-sm font-black">✓</th>
+                    <th className="border-r border-slate-200 py-1.5 w-10 text-rose-700 bg-rose-50/80 font-mono text-sm font-black">✕</th>
                   </React.Fragment>
                 ))}
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-800 font-medium">
+            <tbody className="divide-y divide-slate-200">
               {CHECKLIST_SECTIONS.map((sec) => (
                 <React.Fragment key={sec.id}>
                   {sec.items.map((item, itemIdx) => {
                     const itemKey = `sec_${sec.id}_item_${itemIdx}`;
-                    const currentPhoto = componentPhotos[sec.id];
 
                     return (
-                      <tr key={itemKey} className="hover:bg-blue-50/50 transition">
-                        {/* NO (Hanya di baris pertama section) */}
+                      <tr key={itemKey} className="hover:bg-blue-50/30 transition">
+                        {/* NO (Hanya baris pertama) */}
                         {itemIdx === 0 && (
                           <td
                             rowSpan={sec.items.length}
-                            className="border-r border-slate-800 font-bold p-1 text-center bg-slate-100 align-top"
+                            className="border-r border-slate-200 font-bold px-2 py-2.5 text-center bg-slate-50/50 align-top text-xs text-slate-700"
                           >
                             {sec.id}
                           </td>
                         )}
 
-                        {/* KOMPONEN (Hanya di baris pertama section) */}
+                        {/* KOMPONEN (Hanya baris pertama) */}
                         {itemIdx === 0 && (
                           <td
                             rowSpan={sec.items.length}
-                            className={`border-r border-slate-800 font-bold p-1.5 align-top whitespace-pre-line ${
-                              sec.isBlue ? 'text-blue-600 font-extrabold' : 'text-slate-900'
+                            className={`border-r border-slate-200 font-bold px-3 py-2.5 align-top whitespace-pre-line text-xs ${
+                              sec.isBlue ? 'text-blue-700 font-extrabold' : 'text-slate-900'
                             }`}
                           >
                             {sec.komponen}
@@ -626,93 +682,74 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
                         )}
 
                         {/* JENIS KERUSAKAN */}
-                        <td className={`border-r border-slate-800 p-1.5 leading-snug ${sec.isBlue ? 'text-blue-700 font-semibold' : ''}`}>
+                        <td className={`border-r border-slate-200 px-3 py-2 text-xs leading-relaxed ${
+                          sec.isBlue ? 'text-blue-800 font-medium' : 'text-slate-700'
+                        }`}>
                           {item}
                         </td>
 
-                        {/* GAMBAR / FOTO KOMPONEN DENGAN UPLOAD & ZOOM (Hanya di baris pertama section) */}
-                        {itemIdx === 0 && (
-                          <td
-                            rowSpan={sec.items.length}
-                            className="border-r border-slate-800 p-1.5 text-center align-middle bg-slate-50"
-                          >
-                            <div className="flex flex-col items-center justify-center space-y-1">
-                              {currentPhoto ? (
-                                <div className="relative group w-20 h-16 rounded border border-slate-300 bg-white shadow-xs overflow-hidden flex items-center justify-center">
-                                  <img 
-                                    src={currentPhoto} 
-                                    alt={`Komponen ${sec.id} - ${sec.komponen}`}
-                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
-                                    onClick={() => openZoomModal(currentPhoto, `${sec.id}. ${sec.komponen}`)}
-                                  />
-                                  {/* Overlay Aksi Zoom & Reset */}
-                                  <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => openZoomModal(currentPhoto, `${sec.id}. ${sec.komponen}`)}
-                                      className="p-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
-                                      title="Perbesar Foto"
-                                    >
-                                      <ZoomIn className="w-3.5 h-3.5" />
-                                    </button>
-                                    {!isLocked && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => handleResetPhoto(sec.id, e)}
-                                        className="p-1 rounded bg-rose-600 hover:bg-rose-700 text-white"
-                                        title="Hapus / Reset Foto"
-                                      >
-                                        <RotateCcw className="w-3.5 h-3.5" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div 
-                                  onClick={() => {
-                                    if (!isLocked) {
-                                      document.getElementById(`file_input_sec_${sec.id}`)?.click();
-                                    }
-                                  }}
-                                  className={`w-20 h-14 border border-dashed border-slate-300 rounded bg-slate-100 flex flex-col items-center justify-center transition p-1 ${
-                                    isLocked ? 'cursor-default opacity-60' : 'cursor-pointer hover:bg-blue-50 hover:border-blue-400'
-                                  }`}
-                                  title={isLocked ? 'Tidak ada foto diunggah' : 'Klik untuk unggah foto'}
-                                >
-                                  <ImageIcon className="w-4 h-4 text-slate-400 mb-0.5" />
-                                  <span className="text-[7.5px] font-bold text-slate-500 uppercase leading-none">
-                                    {sec.komponen.split('\n')[0].slice(0, 10)}
-                                  </span>
-                                </div>
-                              )}
+                        {/* GAMBAR / FOTO KOMPONEN */}
+                        {itemIdx === 0 && (() => {
+                          const displayImage = userUploads[sec.id] || defaultHarnessImages[sec.id];
 
-                              {/* Input File Hidden & Tombol Aksi Upload/Ganti */}
-                              {!isLocked && (
-                                <>
-                                  <input 
-                                    type="file" 
-                                    id={`file_input_sec_${sec.id}`}
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      if (e.target.files && e.target.files[0]) {
-                                        handlePhotoUpload(sec.id, e.target.files[0]);
-                                      }
+                          return (
+                            <td
+                              rowSpan={sec.items.length}
+                              className="border-r border-slate-200 px-2 py-3 text-center align-middle bg-slate-50/40"
+                            >
+                              <div className="flex flex-col items-center justify-center">
+                                {/* Frame Container Gambar (HD Fit & Hover Zoom) */}
+                                <div 
+                                  onClick={() => openZoomModal(displayImage, `${sec.id}. ${sec.komponen.replace('\n', ' ')}`)}
+                                  className="w-28 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1 overflow-hidden flex items-center justify-center shadow-xs cursor-pointer hover:border-blue-400 hover:shadow-md transition relative group"
+                                  title="Arahkan kursor untuk zoom detail, klik untuk perbesar penuh"
+                                >
+                                  <img 
+                                    src={displayImage} 
+                                    alt={`Komponen ${sec.id} - ${sec.komponen}`}
+                                    className="w-full h-full object-contain transition-transform duration-300 hover:scale-150 cursor-zoom-in origin-center z-10 hover:shadow-lg hover:rounded-md select-none"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.parentElement?.querySelector('.fb-icon')?.classList.remove('hidden');
                                     }}
                                   />
-                                  <label 
-                                    htmlFor={`file_input_sec_${sec.id}`}
-                                    className="inline-flex items-center space-x-1 text-[8.5px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded cursor-pointer transition shadow-2xs"
-                                    title={currentPhoto ? 'Ganti Foto' : 'Unggah Foto'}
-                                  >
-                                    <Upload className="w-2.5 h-2.5" />
-                                    <span>{currentPhoto ? 'Ganti' : 'Upload'}</span>
-                                  </label>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        )}
+                                  <div className="fb-icon hidden flex flex-col items-center justify-center text-slate-400">
+                                    <ImageIcon className="w-6 h-6 mb-1 text-slate-400" />
+                                    <span className="text-[8px] uppercase font-bold text-slate-500 text-center leading-tight">
+                                      {sec.komponen.split('\n')[0].slice(0, 12)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Tombol Ganti Foto */}
+                                {!isLocked && (
+                                  <div className="mt-2">
+                                    <input 
+                                      type="file" 
+                                      id={`file_input_sec_${sec.id}`}
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                          handlePhotoUpload(sec.id, e.target.files[0]);
+                                          e.target.value = '';
+                                        }
+                                      }}
+                                    />
+                                    <label 
+                                      htmlFor={`file_input_sec_${sec.id}`}
+                                      className="inline-flex items-center space-x-1.5 text-[10px] font-semibold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-50 border border-slate-300 hover:border-blue-300 px-2.5 py-1 rounded-md cursor-pointer transition shadow-2xs"
+                                      title="Ganti foto dengan foto baru"
+                                    >
+                                      <Upload className="w-3 h-3 text-blue-600" />
+                                      <span>Ganti</span>
+                                    </label>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })()}
 
                         {/* RADIO TOGGLE OK / BAD UNTUK SETIAP S/N UNIT */}
                         {units.map((unit, uIdx) => {
@@ -720,24 +757,24 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
 
                           return (
                             <React.Fragment key={uIdx}>
-                              <td className="border-r border-slate-400 p-0.5 text-center">
+                              <td className="border-r border-slate-200 p-2 text-center align-middle bg-white hover:bg-emerald-50/20 transition">
                                 <input
                                   type="radio"
                                   name={`check_${uIdx}_${itemKey}`}
                                   checked={currentStatus === 'OK'}
                                   onChange={() => handleCheckChange(uIdx, itemKey, 'OK')}
-                                  title="✓ (OK / Ceklis)"
-                                  className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer"
+                                  title="✓"
+                                  className="w-4 h-4 text-emerald-600 bg-gray-50 border-gray-300 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
                                 />
                               </td>
-                              <td className="border-r border-slate-800 p-0.5 text-center bg-slate-50/50">
+                              <td className="border-r border-slate-200 p-2 text-center align-middle bg-white hover:bg-rose-50/20 transition">
                                 <input
                                   type="radio"
                                   name={`check_${uIdx}_${itemKey}`}
-                                  checked={currentStatus === 'BAD'}
-                                  onChange={() => handleCheckChange(uIdx, itemKey, 'BAD')}
-                                  title="✗ (BAD / Silang)"
-                                  className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer"
+                                  checked={currentStatus === 'Bad'}
+                                  onChange={() => handleCheckChange(uIdx, itemKey, 'Bad')}
+                                  title="✕"
+                                  className="w-4 h-4 text-rose-600 bg-gray-50 border-gray-300 focus:ring-rose-500 cursor-pointer accent-rose-600"
                                 />
                               </td>
                             </React.Fragment>
@@ -752,20 +789,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           </table>
         </div>
 
-        {/* Remark Area */}
-        <div className="border-2 border-slate-800 p-3 bg-slate-50 rounded-lg">
-          <label className="font-bold text-slate-800 block mb-1">Remark / Catatan Tambahan:</label>
-          <textarea
-            name="remark"
-            rows={3}
-            value={meta.remark}
-            onChange={handleMetaChange}
-            placeholder="Tuliskan catatan khusus atau temuan kerusakan jika ada..."
-            className="w-full p-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-blue-500 bg-white"
-          />
-        </div>
-
-        {/* Tanda Tangan Digital 2 Pihak (HFO & DERICKMAN) */}
+        {/* TANDA TANGAN DIGITAL DUA KOTAK (HFO & DERICKMAN) */}
         <DigitalSignatureSection
           signatures={meta.signatures || {}}
           onSignatureChange={handleSignatureChange}
@@ -782,7 +806,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           }}
         />
 
-        {/* Action Buttons & Status Footer */}
+        {/* FOOTER TOMBOL SUBMIT & EXPORT */}
         <FormSubmitFooter
           onBack={onBack}
           onSubmitFinal={handleFinalSubmit}
@@ -792,6 +816,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
           onExportPdf={handleExportHarnessPdf}
           onExportExcel={handleExportHarnessExcel}
           saveState={saveState}
@@ -805,11 +830,11 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           onClick={closeZoomModal}
         >
           <div 
-            className="bg-white rounded-2xl max-w-2xl w-full border border-slate-300 shadow-2xl overflow-hidden flex flex-col"
+            className="bg-white rounded-2xl max-w-2xl w-full border border-slate-300 shadow-2xl overflow-hidden flex items-center flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 w-full">
               <h3 className="font-black text-sm text-slate-900 flex items-center space-x-2">
                 <ImageIcon className="w-4 h-4 text-blue-600" />
                 <span>{zoomModal.title}</span>
@@ -824,7 +849,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
             </div>
 
             {/* Modal Image Body */}
-            <div className="p-4 flex items-center justify-center bg-slate-950 min-h-[300px] max-h-[70vh] overflow-auto">
+            <div className="p-4 flex items-center justify-center bg-slate-950 min-h-[300px] max-h-[70vh] w-full overflow-auto">
               <img 
                 src={zoomModal.imageSrc} 
                 alt={zoomModal.title}
@@ -833,7 +858,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs w-full">
               <span className="text-slate-500 text-[11px]">
                 Rig: <strong className="text-slate-800">{meta.rigNo}</strong> &bull; Form No: BMSD/17/FO/HSE/08/26
               </span>

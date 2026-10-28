@@ -9,13 +9,13 @@ import DigitalSignatureSection from './DigitalSignatureSection';
 
 // Daftar item bawaan sesuai formulir fisik
 const DEFAULT_ITEMS = [
-  { id: 1, daftarIsi: 'Box / Tempat / Wadah', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 2, daftarIsi: 'Absorber Spill', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 3, daftarIsi: 'Plastik Besar', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 4, daftarIsi: 'Serbuk Kayu', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 5, daftarIsi: 'Kain Pel / Kain Kanebo Besar', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 6, daftarIsi: 'Sarung Tangan', jumlah: '1', kondisi: '✓', temuan: '' },
-  { id: 7, daftarIsi: 'Appron', jumlah: '1', kondisi: '✓', temuan: '' }
+  { id: 1, daftarIsi: 'Box / Tempat / Wadah', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 2, daftarIsi: 'Absorber Spill', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 3, daftarIsi: 'Plastik Besar', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 4, daftarIsi: 'Serbuk Kayu', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 5, daftarIsi: 'Kain Pel / Kain Kanebo Besar', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 6, daftarIsi: 'Sarung Tangan', jumlah: '1', kondisi: '-', temuan: '' },
+  { id: 7, daftarIsi: 'Appron', jumlah: '1', kondisi: '-', temuan: '' }
 ];
 
 export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null, viewMonth = null, viewYear = null }) {
@@ -116,7 +116,7 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
     if (isLocked) return;
     setItems([
       ...items,
-      { id: Date.now(), daftarIsi: '', jumlah: '1', kondisi: '✓', temuan: '' }
+      { id: Date.now(), daftarIsi: '', jumlah: '1', kondisi: '-', temuan: '' }
     ]);
   };
 
@@ -275,7 +275,7 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
                 <span className="px-2 py-0.5 font-semibold text-slate-700">Kondisi Bagus</span>
               </div>
               <div className="flex items-center border border-slate-800 bg-white">
-                <span className="px-3 py-0.5 border-r border-slate-800 font-black text-rose-600 bg-rose-50">X</span>
+                <span className="px-3 py-0.5 border-r border-slate-800 font-black text-rose-600 bg-rose-50">✕</span>
                 <span className="px-2 py-0.5 font-semibold text-slate-700">Kondisi Rusak / Kurang</span>
               </div>
               <div className="flex items-center border border-slate-800 bg-white">
@@ -328,20 +328,21 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
                     />
                   </td>
 
-                  {/* Kondisi (✓ / X / N/A) */}
+                  {/* Kondisi (✓ / ✕ / N/A) */}
                   <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.kondisi}
                       onChange={(e) => handleItemChange(index, 'kondisi', e.target.value)}
                       className={`w-full font-black text-center text-xs py-1 rounded focus:outline-none cursor-pointer transition ${
                         row.kondisi === '✓' || row.kondisi === '√' ? 'bg-emerald-100 text-emerald-800 font-extrabold' : 
-                        row.kondisi === 'X' ? 'bg-rose-100 text-rose-800 font-extrabold' : 
-                        row.kondisi === 'N/A' ? 'bg-slate-200 text-slate-700' : 'bg-transparent text-slate-500'
+                        row.kondisi === '✕' || row.kondisi === 'X' || row.kondisi === '✗' ? 'bg-rose-100 text-rose-800 font-extrabold' : 
+                        row.kondisi === 'N/A' ? 'bg-slate-200 text-slate-700' : 'bg-transparent text-slate-400 font-normal'
                       }`}
                     >
-                      <option value="✓" className="font-bold text-emerald-700">✓ (Bagus)</option>
-                      <option value="X" className="font-bold text-rose-700">X (Rusak / Kurang)</option>
-                      <option value="N/A" className="font-bold text-slate-600">N/A (Tidak Berlaku)</option>
+                      <option value="-">-</option>
+                      <option value="✓">✓</option>
+                      <option value="✕">✕</option>
+                      <option value="N/A">N/A</option>
                     </select>
                   </td>
 

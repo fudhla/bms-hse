@@ -12,11 +12,11 @@ const CREATE_EMPTY_ROW = (id) => ({
   id,
   merkTypeSerial: '',
   penempatan: '',
-  pressureVolume: '✓',
-  regulator: '✓',
-  hydroTest: '✓',
-  tabung: '✓',
-  valveConnection: '✓',
+  pressureVolume: '-',
+  regulator: '-',
+  hydroTest: '-',
+  tabung: '-',
+  valveConnection: '-',
   rekomendasi: ''
 });
 
@@ -280,37 +280,32 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
                 <th rowSpan="2" className="border-r border-slate-800 p-2 w-8">No</th>
                 <th rowSpan="2" className="border-r border-slate-800 p-2 min-w-[150px]">MERK, TYPE / SERIAL NO</th>
                 <th rowSpan="2" className="border-r border-slate-800 p-2 min-w-[120px]">PENEMPATAN</th>
-                <th colSpan="10" className="border-r border-slate-800 p-1 text-base tracking-widest bg-slate-400">
+                <th colSpan={5} className="border-r border-slate-800 p-1 text-base tracking-widest bg-slate-400">
                   CONDITION
                 </th>
                 <th rowSpan="2" className="p-2 min-w-[140px]">REKOMENDASI</th>
                 <th rowSpan="2" className="p-1 w-8 bg-slate-200">Action</th>
               </tr>
-              <tr className="bg-slate-200 font-bold text-center border-b-2 border-slate-800 text-[9px]">
+              <tr className="bg-slate-200 font-bold text-center border-b-2 border-slate-800 text-[10px]">
                 {/* Pressure Volume */}
-                <th colSpan="2" className="border-r border-slate-800 p-1">
-                  PRESSURE VOLUME (Psi)<br />
-                  <span className="font-black text-[9px] text-emerald-700">✓</span> / <span className="font-black text-[9px] text-rose-700">✗</span>
+                <th className="border-r border-slate-800 p-2">
+                  PRESSURE VOLUME (Psi)
                 </th>
                 {/* Regulator */}
-                <th colSpan="2" className="border-r border-slate-800 p-1">
-                  REGURATOR<br />
-                  <span className="font-black text-[9px] text-emerald-700">✓</span> / <span className="font-black text-[9px] text-rose-700">✗</span>
+                <th className="border-r border-slate-800 p-2">
+                  REGULATOR
                 </th>
                 {/* Hydro Test */}
-                <th colSpan="2" className="border-r border-slate-800 p-1">
-                  HYDRO TEST<br />
-                  <span className="font-black text-[9px] text-emerald-700">✓</span> / <span className="font-black text-[9px] text-rose-700">✗</span>
+                <th className="border-r border-slate-800 p-2">
+                  HYDRO TEST
                 </th>
                 {/* Tabung */}
-                <th colSpan="2" className="border-r border-slate-800 p-1">
-                  TABUNG<br />
-                  <span className="font-black text-[9px] text-emerald-700">✓</span> / <span className="font-black text-[9px] text-rose-700">✗</span>
+                <th className="border-r border-slate-800 p-2">
+                  TABUNG
                 </th>
                 {/* Valve & Connection */}
-                <th colSpan="2" className="border-r border-slate-800 p-1">
-                  VALVE & connection<br />
-                  <span className="font-black text-[9px] text-emerald-700">✓</span> / <span className="font-black text-[9px] text-rose-700">✗</span>
+                <th className="border-r border-slate-800 p-2">
+                  VALVE & connection
                 </th>
               </tr>
             </thead>
@@ -343,106 +338,111 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
                   </td>
 
                   {/* Pressure Volume (Psi) */}
-                  <td colSpan="2" className="border-r border-slate-800 p-1 text-center">
+                  <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.pressureVolume}
                       onChange={(e) => handleItemChange(index, 'pressureVolume', e.target.value)}
                       className={`w-full text-center font-bold text-[10px] cursor-pointer focus:outline-none rounded py-0.5 ${
                         row.pressureVolume === '✓' || row.pressureVolume === 'Good'
                           ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                          : row.pressureVolume === 'X' || row.pressureVolume === 'Bad'
+                          : row.pressureVolume === '✕' || row.pressureVolume === 'X' || row.pressureVolume === '✗' || row.pressureVolume === 'Bad'
                           ? 'bg-rose-100 text-rose-800 font-extrabold'
                           : row.pressureVolume === 'N/A'
                           ? 'bg-slate-200 text-slate-700'
                           : 'bg-transparent text-slate-400'
                       }`}
                     >
+                      <option value="-">-</option>
                       <option value="✓">✓</option>
-                      <option value="X">X</option>
+                      <option value="✕">✕</option>
                       <option value="N/A">N/A</option>
                     </select>
                   </td>
 
                   {/* Regulator */}
-                  <td colSpan="2" className="border-r border-slate-800 p-1 text-center">
+                  <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.regulator}
                       onChange={(e) => handleItemChange(index, 'regulator', e.target.value)}
                       className={`w-full text-center font-bold text-[10px] cursor-pointer focus:outline-none rounded py-0.5 ${
                         row.regulator === '✓' || row.regulator === 'Good'
                           ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                          : row.regulator === 'X' || row.regulator === 'Bad'
+                          : row.regulator === '✕' || row.regulator === 'X' || row.regulator === '✗' || row.regulator === 'Bad'
                           ? 'bg-rose-100 text-rose-800 font-extrabold'
                           : row.regulator === 'N/A'
                           ? 'bg-slate-200 text-slate-700'
                           : 'bg-transparent text-slate-400'
                       }`}
                     >
+                      <option value="-">-</option>
                       <option value="✓">✓</option>
-                      <option value="X">X</option>
+                      <option value="✕">✕</option>
                       <option value="N/A">N/A</option>
                     </select>
                   </td>
 
                   {/* Hydro Test */}
-                  <td colSpan="2" className="border-r border-slate-800 p-1 text-center">
+                  <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.hydroTest}
                       onChange={(e) => handleItemChange(index, 'hydroTest', e.target.value)}
                       className={`w-full text-center font-bold text-[10px] cursor-pointer focus:outline-none rounded py-0.5 ${
                         row.hydroTest === '✓' || row.hydroTest === 'Berlaku'
                           ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                          : row.hydroTest === 'X' || row.hydroTest === 'Expire'
+                          : row.hydroTest === '✕' || row.hydroTest === 'X' || row.hydroTest === '✗' || row.hydroTest === 'Expire'
                           ? 'bg-rose-100 text-rose-800 font-extrabold'
                           : row.hydroTest === 'N/A'
                           ? 'bg-slate-200 text-slate-700'
                           : 'bg-transparent text-slate-400'
                       }`}
                     >
+                      <option value="-">-</option>
                       <option value="✓">✓</option>
-                      <option value="X">X</option>
+                      <option value="✕">✕</option>
                       <option value="N/A">N/A</option>
                     </select>
                   </td>
 
                   {/* Tabung */}
-                  <td colSpan="2" className="border-r border-slate-800 p-1 text-center">
+                  <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.tabung}
                       onChange={(e) => handleItemChange(index, 'tabung', e.target.value)}
                       className={`w-full text-center font-bold text-[10px] cursor-pointer focus:outline-none rounded py-0.5 ${
                         row.tabung === '✓' || row.tabung === 'Good'
                           ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                          : row.tabung === 'X' || row.tabung === 'Bad'
+                          : row.tabung === '✕' || row.tabung === 'X' || row.tabung === '✗' || row.tabung === 'Bad'
                           ? 'bg-rose-100 text-rose-800 font-extrabold'
                           : row.tabung === 'N/A'
                           ? 'bg-slate-200 text-slate-700'
                           : 'bg-transparent text-slate-400'
                       }`}
                     >
+                      <option value="-">-</option>
                       <option value="✓">✓</option>
-                      <option value="X">X</option>
+                      <option value="✕">✕</option>
                       <option value="N/A">N/A</option>
                     </select>
                   </td>
 
                   {/* Valve & Connection */}
-                  <td colSpan="2" className="border-r border-slate-800 p-1 text-center">
+                  <td className="border-r border-slate-800 p-1 text-center">
                     <select
                       value={row.valveConnection}
                       onChange={(e) => handleItemChange(index, 'valveConnection', e.target.value)}
                       className={`w-full text-center font-bold text-[10px] cursor-pointer focus:outline-none rounded py-0.5 ${
                         row.valveConnection === '✓' || row.valveConnection === 'Good'
                           ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                          : row.valveConnection === 'X' || row.valveConnection === 'Bad'
+                          : row.valveConnection === '✕' || row.valveConnection === 'X' || row.valveConnection === '✗' || row.valveConnection === 'Bad'
                           ? 'bg-rose-100 text-rose-800 font-extrabold'
                           : row.valveConnection === 'N/A'
                           ? 'bg-slate-200 text-slate-700'
                           : 'bg-transparent text-slate-400'
                       }`}
                     >
+                      <option value="-">-</option>
                       <option value="✓">✓</option>
-                      <option value="X">X</option>
+                      <option value="✕">✕</option>
                       <option value="N/A">N/A</option>
                     </select>
                   </td>

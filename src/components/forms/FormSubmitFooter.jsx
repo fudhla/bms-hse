@@ -22,6 +22,8 @@ import {
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
+import { validateInspectionSignatures } from './DigitalSignatureSection';
+import ValidationModal, { validateInspectionFormStrict } from './ValidationModal';
 
 export default function FormSubmitFooter({
   onBack,
@@ -38,6 +40,8 @@ export default function FormSubmitFooter({
   saveState
 }) {
   // Modal States
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -110,58 +114,61 @@ export default function FormSubmitFooter({
     };
   }, [sliderPosition]);
 
-  const triggerErrorToast = (errorMsg) => {
-    setToast({
-      show: true,
-      type: 'error',
-      title: 'Validasi Formulir Gagal',
-      message: errorMsg
-    });
+  const triggerValidationModal = (errorMsg) => {
+    setValidationMessage(errorMsg || 'Harap isi Tanggal Inspeksi dan lengkapi Tanda Tangan HFO & Toolpusher sebelum mengunci dokumen.');
+    setShowValidationModal(true);
   };
 
-  // Intersepsi Tombol Pemicu Modal Konfirmasi
+  const handleCloseValidationModal = () => {
+    setShowValidationModal(false);
+    // Auto-scroll halus ke komponen formulir yang perlu dilengkapi
+    if (typeof document !== 'undefined') {
+      const msg = (validationMessage || '').toLowerCase();
+      if (msg.includes('tanda tangan') || msg.includes('ttd') || msg.includes('hfo') || msg.includes('toolpusher')) {
+        const allSections = document.querySelectorAll('#digital-signature-section, [data-signature-section]');
+        let visibleEl = null;
+        for (const el of allSections) {
+          if (el.offsetParent !== null || el.getClientRects().length > 0) {
+            visibleEl = el;
+            break;
+          }
+        }
+        const elToScroll = visibleEl || allSections[0];
+        if (elToScroll) {
+          elToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          elToScroll.classList.add('ring-4', 'ring-rose-500/50', 'rounded-2xl', 'transition-all', 'duration-500');
+          setTimeout(() => {
+            elToScroll.classList.remove('ring-4', 'ring-rose-500/50', 'rounded-2xl');
+          }, 2500);
+          return;
+        }
+      }
+
+      // Jika masalah Tanggal Inspeksi atau Nama Penanggung Jawab di bagian atas
+      const formSheet = document.querySelector('.form-sheet') || document.querySelector('form');
+      if (formSheet) {
+        formSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  // Intersepsi Tombol Pemicu Modal Konfirmasi ("Kunci & Submit Final")
   const handleOpenConfirmModal = () => {
     // 1. Eksekusi callback onValidate (dari useInspectionForm) jika tersedia
     if (typeof onValidate === 'function') {
       const result = onValidate();
       if (result === false || (result && result.isValid === false)) {
-        const msg = (result && result.message) || 'Gagal: Harap lengkapi Tanggal Inspeksi dan Nama Penanggung Jawab (HSE/Tool Pusher) sebelum mengunci laporan.';
-        triggerErrorToast(msg);
+        const msg = (result && result.message) || 'Harap isi Tanggal Inspeksi dan lengkapi Tanda Tangan HFO & Toolpusher sebelum mengunci dokumen.';
+        triggerValidationModal(msg);
         return;
       }
     }
 
-    // 2. Fallback validasi mandiri jika prop meta diberikan
+    // 2. Validasi Ketat Mandiri jika prop meta diberikan
     if (meta) {
-      const tgl = meta.tanggal || meta.inspectionDate || meta.period;
-      const isTanggalValid = tgl && String(tgl).trim().length >= 4;
-
-      const safetyOfficer = 
-        meta.hfo_name ||
-        meta.hfoName ||
-        meta.inspectedBy ||
-        meta.inspectedByName ||
-        meta.hesOfficerName ||
-        meta.hesFieldOfficer ||
-        meta.wsrName ||
-        meta.derrickmanName ||
-        meta.signatures?.hfo?.name ||
-        meta.signatures?.wfo?.name ||
-        meta.signatures?.user?.name;
-      const isSafetyOfficerValid = safetyOfficer && String(safetyOfficer).trim().length > 0;
-
-      const toolPusher = 
-        meta.tool_pusher_name ||
-        meta.toolPusherName ||
-        meta.toolPusher ||
-        meta.acknowledgedBy ||
-        meta.acknowledgedByName ||
-        meta.hesCoordinatorName ||
-        meta.signatures?.toolpush?.name;
-      const isToolPusherValid = toolPusher && String(toolPusher).trim().length > 0;
-
-      if (!isTanggalValid || !isSafetyOfficerValid || !isToolPusherValid) {
-        triggerErrorToast('Gagal: Harap lengkapi Tanggal Inspeksi dan Nama Penanggung Jawab (HSE/Tool Pusher) sebelum mengunci laporan.');
+      const check = validateInspectionFormStrict(meta);
+      if (!check.isValid) {
+        triggerValidationModal(check.message);
         return;
       }
     }
@@ -173,6 +180,29 @@ export default function FormSubmitFooter({
   // Eksekusi Persetujuan & Animasi
   const executeApproval = async () => {
     if (isApproving || submitting) return;
+
+    // Verifikasi ulang sebelum mengirim ke backend
+    if (typeof onValidate === 'function') {
+      const result = onValidate();
+      if (result === false || (result && result.isValid === false)) {
+        const msg = (result && result.message) || 'Harap isi Tanggal Inspeksi dan lengkapi Tanda Tangan HFO & Toolpusher sebelum mengunci dokumen.';
+        setIsApproving(false);
+        setSliderPosition(0);
+        setShowConfirmModal(false);
+        triggerValidationModal(msg);
+        return;
+      }
+    } else if (meta) {
+      const check = validateInspectionFormStrict(meta);
+      if (!check.isValid) {
+        setIsApproving(false);
+        setSliderPosition(0);
+        setShowConfirmModal(false);
+        triggerValidationModal(check.message);
+        return;
+      }
+    }
+
     setIsApproving(true);
     setApprovalProgressStep(1);
 
@@ -186,7 +216,7 @@ export default function FormSubmitFooter({
         setIsApproving(false);
         setSliderPosition(0);
         setShowConfirmModal(false);
-        triggerErrorToast('Gagal: Harap lengkapi Tanggal Inspeksi dan Nama Penanggung Jawab (HSE/Tool Pusher) sebelum mengunci laporan.');
+        triggerValidationModal('Gagal menyimpan! Harap periksa kembali kelengkapan formulir dan tanda tangan.');
         return;
       }
 
@@ -205,7 +235,7 @@ export default function FormSubmitFooter({
     } catch (err) {
       setIsApproving(false);
       setSliderPosition(0);
-      triggerErrorToast('Gagal menyetujui dokumen: ' + err.message);
+      triggerValidationModal('Gagal menyetujui dokumen: ' + err.message);
     }
   };
 
@@ -218,6 +248,18 @@ export default function FormSubmitFooter({
       return () => clearTimeout(timer);
     }
   }, [toast.show]);
+
+  // Validasi Wajib Sebelum Export PDF
+  const handleProtectedExportPdf = () => {
+    if (meta) {
+      const check = validateInspectionFormStrict(meta);
+      if (!check.isValid) {
+        triggerValidationModal(check.message);
+        return;
+      }
+    }
+    if (onExportPdf) onExportPdf();
+  };
 
   return (
     <>
@@ -250,8 +292,8 @@ export default function FormSubmitFooter({
         }
       `}</style>
 
-      {/* ── FLOATING TOAST NOTIFICATION ATAS (SUCCESS / ERROR) ── */}
-      {toast.show && (
+      {/* ── FLOATING TOAST NOTIFICATION ATAS (SUCCESS ONLY) ── */}
+      {toast.show && toast.type !== 'error' && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center px-4 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
           <div className={`pointer-events-auto text-white px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md flex items-center space-x-3 max-w-lg w-full border ${
             toast.type === 'error'
@@ -313,7 +355,7 @@ export default function FormSubmitFooter({
               {onExportPdf && (
                 <button
                   type="button"
-                  onClick={onExportPdf}
+                  onClick={handleProtectedExportPdf}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                   title="Download Format PDF Resmi"
                 >
@@ -365,7 +407,7 @@ export default function FormSubmitFooter({
               {onExportPdf && (
                 <button
                   type="button"
-                  onClick={onExportPdf}
+                  onClick={handleProtectedExportPdf}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                   title="Download Format PDF Resmi"
                 >
@@ -417,7 +459,7 @@ export default function FormSubmitFooter({
               {onExportPdf && (
                 <button
                   type="button"
-                  onClick={onExportPdf}
+                  onClick={handleProtectedExportPdf}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                   title="Download Format PDF Resmi"
                 >
@@ -676,7 +718,7 @@ export default function FormSubmitFooter({
                 <button
                   type="button"
                   onClick={() => {
-                    onExportPdf();
+                    handleProtectedExportPdf();
                   }}
                   className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-extrabold text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
                 >
@@ -717,6 +759,14 @@ export default function FormSubmitFooter({
           </div>
         </div>
       )}
+
+      {/* ── 3. MODAL NOTIFIKASI VALIDASI KUSTOM (PREMIUM RED) ── */}
+      <ValidationModal
+        isOpen={showValidationModal}
+        title="Validasi Gagal!"
+        message={validationMessage}
+        onClose={handleCloseValidationModal}
+      />
     </>
   );
 }

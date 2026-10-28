@@ -10,22 +10,38 @@ import DigitalSignatureSection from './DigitalSignatureSection';
 // ── 1. INISIALISASI DATA DEFAULT CHECKLIST (IDENTIK UNTUK STANDAR & HYBRID) ──
 // Sesuai mandat: ISI TABEL TETAP SAMA untuk kedua tab (tidak digandakan).
 export const INITIAL_SHOWER_ROWS = [
-  { id: 'shower_1', no: 1, week: 'I', date: '', penempatan: '', waterTank: '', waterSupply: '', waterLine: '', shower: '', cleanness: '', pump: '', remarks: '' },
-  { id: 'shower_2', no: 2, week: 'II', date: '', penempatan: '', waterTank: '', waterSupply: '', waterLine: '', shower: '', cleanness: '', pump: '', remarks: '' },
-  { id: 'shower_3', no: 3, week: 'III', date: '', penempatan: '', waterTank: '', waterSupply: '', waterLine: '', shower: '', cleanness: '', pump: '', remarks: '' },
-  { id: 'shower_4', no: 4, week: 'IV', date: '', penempatan: '', waterTank: '', waterSupply: '', waterLine: '', shower: '', cleanness: '', pump: '', remarks: '' },
+  { id: 'shower_1', no: 1, week: 'I', date: '', penempatan: '', waterTank: '-', waterSupply: '-', waterLine: '-', shower: '-', cleanness: '-', pump: '-', remarks: '' },
+  { id: 'shower_2', no: 2, week: 'II', date: '', penempatan: '', waterTank: '-', waterSupply: '-', waterLine: '-', shower: '-', cleanness: '-', pump: '-', remarks: '' },
+  { id: 'shower_3', no: 3, week: 'III', date: '', penempatan: '', waterTank: '-', waterSupply: '-', waterLine: '-', shower: '-', cleanness: '-', pump: '-', remarks: '' },
+  { id: 'shower_4', no: 4, week: 'IV', date: '', penempatan: '', waterTank: '-', waterSupply: '-', waterLine: '-', shower: '-', cleanness: '-', pump: '-', remarks: '' },
 ];
 
 export const INITIAL_EYEWASH_ROWS = [
-  { id: 'ew_1', no: 1, week: 'I', date: '', penempatan: 'Rig office', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_2', no: 2, week: 'I', date: '', penempatan: 'Tanki', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_3', no: 3, week: 'II', date: '', penempatan: 'Rig office', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_4', no: 4, week: 'II', date: '', penempatan: 'Tanki', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_5', no: 5, week: 'III', date: '', penempatan: 'Rig office', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_6', no: 6, week: 'III', date: '', penempatan: 'Tanki', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_7', no: 7, week: 'IV', date: '', penempatan: 'Rig office', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
-  { id: 'ew_8', no: 8, week: 'IV', date: '', penempatan: 'Tanki', waterTank: '', shower: '', adhesive: '', waterSupply: '', closed: '', cover: '', remarks: '' },
+  { id: 'ew_1', no: 1, week: 'I', date: '', penempatan: 'Rig office', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_2', no: 2, week: 'I', date: '', penempatan: 'Tanki', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_3', no: 3, week: 'II', date: '', penempatan: 'Rig office', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_4', no: 4, week: 'II', date: '', penempatan: 'Tanki', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_5', no: 5, week: 'III', date: '', penempatan: 'Rig office', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_6', no: 6, week: 'III', date: '', penempatan: 'Tanki', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_7', no: 7, week: 'IV', date: '', penempatan: 'Rig office', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
+  { id: 'ew_8', no: 8, week: 'IV', date: '', penempatan: 'Tanki', waterTank: '-', shower: '-', adhesive: '-', waterSupply: '-', closed: '-', cover: '-', remarks: '' },
 ];
+
+// Helper normalisasi kondisi untuk kompatibilitas data lama
+const normalizeCond = (val) => {
+  if (val === 'Good' || val === '✓' || val === 'V' || val === 'v') return '✓';
+  if (val === 'Bad' || val === '✕' || val === 'X' || val === 'x' || val === '✗') return '✕';
+  if (val === 'N/A' || val === 'na' || val === 'NA') return 'N/A';
+  return '-';
+};
+
+const getSelectClass = (val) => {
+  const norm = normalizeCond(val);
+  if (norm === '✓') return 'bg-emerald-100 text-emerald-800 font-extrabold';
+  if (norm === '✕') return 'bg-rose-100 text-rose-800 font-extrabold';
+  if (norm === 'N/A') return 'bg-slate-200 text-slate-700 font-bold';
+  return 'bg-transparent text-slate-400 font-normal';
+};
 
 // ── 2. KOMPONEN PANEL TAB INDEPENDEN (ISOLASI TOTAL STATE & DATA) ──────────
 function EyewashTabPanel({
@@ -318,6 +334,23 @@ function EyewashTabPanel({
           </div>
         </div>
 
+        {/* KETERANGAN SIMBOL / PETUNJUK STANDAR */}
+        <div className="bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-[11px] text-slate-700 flex flex-wrap items-center gap-4">
+          <span className="font-bold uppercase tracking-wider text-slate-900">Petunjuk Pengisian Kondisi:</span>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 bg-emerald-100 text-emerald-800 font-black rounded">✓</span>
+            <span>= Kondisi Bagus / Berfungsi Baik</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 bg-rose-100 text-rose-800 font-black rounded">✕</span>
+            <span>= Rusak / Perlu Perbaikan</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center w-7 h-5 bg-slate-200 text-slate-700 font-bold rounded">N/A</span>
+            <span>= Tidak Ada / Tidak Berlaku</span>
+          </div>
+        </div>
+
         {/* SECTION 1: SHOWER */}
         <div className="space-y-2">
           <div className="flex items-center justify-between border-b-2 border-slate-300 pb-1">
@@ -330,47 +363,25 @@ function EyewashTabPanel({
           </div>
 
           <div className="overflow-x-auto border border-slate-300 rounded-xl shadow-xs bg-white">
-            <table className="w-full border-collapse text-[10px] text-slate-900 min-w-[1200px]">
+            <table className="w-full border-collapse text-[10px] text-slate-900 min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-100 font-bold text-center border-b border-slate-300 text-slate-800">
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-8">No</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-16">Week / Minggu</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-28">Date / Tanggal</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-2 w-40">Posisi/Area Penempatan</th>
-                  <th colSpan={12} className="border-r border-slate-300 p-1 bg-slate-200 font-black">
+                  <th colSpan={6} className="border-r border-slate-300 p-1 bg-slate-200 font-black">
                     Condition / Keadaan
                   </th>
                   <th rowSpan={2} className="p-2 w-48">Remarks / Keterangan</th>
                 </tr>
                 <tr className="bg-slate-50 font-bold text-center border-b border-slate-300 text-slate-700">
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Water Tank / Tangki Air</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Water Suply / Persediaan Air</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Water line & valve / Keran & saluran air</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Shower / Pancuran</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Cleanness of water & tank / Kebersihan Air & Tangki</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Elect Motor Pump / Pompa Air Listrik</th>
-                </tr>
-                {/* Good/Bad Indicators */}
-                <tr className="bg-slate-100/60 font-bold text-center border-b border-slate-300 text-[9px]">
-                  <th colSpan={4} className="border-r border-slate-300"></th>
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-                  <th></th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Water Tank / Tangki Air</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Water Suply / Persediaan Air</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Water line & valve / Keran & saluran air</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Shower / Pancuran</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Cleanness of water & tank / Kebersihan Air & Tangki</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Elect Motor Pump / Pompa Air Listrik</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 font-medium">
@@ -383,6 +394,7 @@ function EyewashTabPanel({
                         type="date"
                         value={row.date}
                         onChange={(e) => handleShowerChange(idx, 'date', e.target.value)}
+                        disabled={isLocked}
                         className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800"
                       />
                     </td>
@@ -392,56 +404,99 @@ function EyewashTabPanel({
                         value={row.penempatan}
                         onChange={(e) => handleShowerChange(idx, 'penempatan', e.target.value)}
                         placeholder="Posisi / Area"
+                        disabled={isLocked}
                         className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800 px-1"
                       />
                     </td>
 
                     {/* Water Tank */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_wt_${subType}_${row.id}`} checked={row.waterTank === 'Good'} onChange={() => handleShowerChange(idx, 'waterTank', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_wt_${subType}_${row.id}`} checked={row.waterTank === 'Bad'} onChange={() => handleShowerChange(idx, 'waterTank', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.waterTank)}
+                        onChange={(e) => handleShowerChange(idx, 'waterTank', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.waterTank)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Water Supply */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_ws_${subType}_${row.id}`} checked={row.waterSupply === 'Good'} onChange={() => handleShowerChange(idx, 'waterSupply', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_ws_${subType}_${row.id}`} checked={row.waterSupply === 'Bad'} onChange={() => handleShowerChange(idx, 'waterSupply', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.waterSupply)}
+                        onChange={(e) => handleShowerChange(idx, 'waterSupply', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.waterSupply)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Water Line & Valve */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_wl_${subType}_${row.id}`} checked={row.waterLine === 'Good'} onChange={() => handleShowerChange(idx, 'waterLine', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_wl_${subType}_${row.id}`} checked={row.waterLine === 'Bad'} onChange={() => handleShowerChange(idx, 'waterLine', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.waterLine)}
+                        onChange={(e) => handleShowerChange(idx, 'waterLine', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.waterLine)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Shower */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_sh_${subType}_${row.id}`} checked={row.shower === 'Good'} onChange={() => handleShowerChange(idx, 'shower', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_sh_${subType}_${row.id}`} checked={row.shower === 'Bad'} onChange={() => handleShowerChange(idx, 'shower', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.shower)}
+                        onChange={(e) => handleShowerChange(idx, 'shower', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.shower)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Cleanness */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_cl_${subType}_${row.id}`} checked={row.cleanness === 'Good'} onChange={() => handleShowerChange(idx, 'cleanness', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_cl_${subType}_${row.id}`} checked={row.cleanness === 'Bad'} onChange={() => handleShowerChange(idx, 'cleanness', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.cleanness)}
+                        onChange={(e) => handleShowerChange(idx, 'cleanness', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.cleanness)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Elect Motor Pump */}
                     <td className="border-r border-slate-200 text-center p-1">
-                      <input type="radio" name={`s_pm_${subType}_${row.id}`} checked={row.pump === 'Good'} onChange={() => handleShowerChange(idx, 'pump', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                    </td>
-                    <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                      <input type="radio" name={`s_pm_${subType}_${row.id}`} checked={row.pump === 'Bad'} onChange={() => handleShowerChange(idx, 'pump', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                      <select
+                        value={normalizeCond(row.pump)}
+                        onChange={(e) => handleShowerChange(idx, 'pump', e.target.value)}
+                        disabled={isLocked}
+                        className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.pump)}`}
+                      >
+                        <option value="-">-</option>
+                        <option value="✓">✓</option>
+                        <option value="✕">✕</option>
+                        <option value="N/A">N/A</option>
+                      </select>
                     </td>
 
                     {/* Remarks */}
@@ -451,6 +506,7 @@ function EyewashTabPanel({
                         value={row.remarks}
                         onChange={(e) => handleShowerChange(idx, 'remarks', e.target.value)}
                         placeholder="Keterangan..."
+                        disabled={isLocked}
                         className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800 px-1"
                       />
                     </td>
@@ -473,47 +529,25 @@ function EyewashTabPanel({
           </div>
 
           <div className="overflow-x-auto border border-slate-300 rounded-xl shadow-xs bg-white">
-            <table className="w-full border-collapse text-[10px] text-slate-900 min-w-[1200px]">
+            <table className="w-full border-collapse text-[10px] text-slate-900 min-w-[1000px]">
               <thead>
                 <tr className="bg-slate-100 font-bold text-center border-b border-slate-300 text-slate-800">
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-8">No</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-16">Week / Minggu</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-1 w-28">Date / Tanggal</th>
                   <th rowSpan={2} className="border-r border-slate-300 p-2 w-40">Posisi / Area Penempatan</th>
-                  <th colSpan={12} className="border-r border-slate-300 p-1 bg-slate-200 font-black">
+                  <th colSpan={6} className="border-r border-slate-300 p-1 bg-slate-200 font-black">
                     Condition / Keadaan
                   </th>
                   <th rowSpan={2} className="p-2 w-48">Remarks / Keterangan</th>
                 </tr>
                 <tr className="bg-slate-50 font-bold text-center border-b border-slate-300 text-slate-700">
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Water Tank / Tangki Air</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Shower / Pancuran</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Adhesive / Perekat</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Water Suply / Isi Air</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Closed / Tutup</th>
-                  <th colSpan={2} className="border-r border-slate-300 p-1">Cover / Pelindung</th>
-                </tr>
-                {/* Good/Bad Indicators */}
-                <tr className="bg-slate-100/60 font-bold text-center border-b border-slate-300 text-[9px]">
-                  <th colSpan={4} className="border-r border-slate-300"></th>
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-
-                  <th className="border-r border-slate-200 p-0.5 w-8 bg-emerald-50 text-emerald-700 font-black text-xs" title="Good / Ceklis">✓</th>
-                  <th className="border-r border-slate-300 p-0.5 w-8 bg-rose-50 text-rose-700 font-black text-xs" title="Bad / Silang">✗</th>
-                  <th></th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Water Tank / Tangki Air</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Shower / Pancuran</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Adhesive / Perekat</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Water Suply / Isi Air</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Closed / Tutup</th>
+                  <th className="border-r border-slate-300 p-1 min-w-[100px]">Cover / Pelindung</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 font-medium">
@@ -536,6 +570,7 @@ function EyewashTabPanel({
                           type="date"
                           value={row.date}
                           onChange={(e) => handleEyewashChange(idx, 'date', e.target.value)}
+                          disabled={isLocked}
                           className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800"
                         />
                       </td>
@@ -545,56 +580,99 @@ function EyewashTabPanel({
                           type="text"
                           value={row.penempatan}
                           onChange={(e) => handleEyewashChange(idx, 'penempatan', e.target.value)}
+                          disabled={isLocked}
                           className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800 px-1"
                         />
                       </td>
 
                       {/* Water Tank */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_wt_${subType}_${row.id}`} checked={row.waterTank === 'Good'} onChange={() => handleEyewashChange(idx, 'waterTank', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_wt_${subType}_${row.id}`} checked={row.waterTank === 'Bad'} onChange={() => handleEyewashChange(idx, 'waterTank', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.waterTank)}
+                          onChange={(e) => handleEyewashChange(idx, 'waterTank', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.waterTank)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Shower */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_sh_${subType}_${row.id}`} checked={row.shower === 'Good'} onChange={() => handleEyewashChange(idx, 'shower', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_sh_${subType}_${row.id}`} checked={row.shower === 'Bad'} onChange={() => handleEyewashChange(idx, 'shower', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.shower)}
+                          onChange={(e) => handleEyewashChange(idx, 'shower', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.shower)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Adhesive */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_ad_${subType}_${row.id}`} checked={row.adhesive === 'Good'} onChange={() => handleEyewashChange(idx, 'adhesive', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_ad_${subType}_${row.id}`} checked={row.adhesive === 'Bad'} onChange={() => handleEyewashChange(idx, 'adhesive', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.adhesive)}
+                          onChange={(e) => handleEyewashChange(idx, 'adhesive', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.adhesive)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Water Supply */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_ws_${subType}_${row.id}`} checked={row.waterSupply === 'Good'} onChange={() => handleEyewashChange(idx, 'waterSupply', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_ws_${subType}_${row.id}`} checked={row.waterSupply === 'Bad'} onChange={() => handleEyewashChange(idx, 'waterSupply', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.waterSupply)}
+                          onChange={(e) => handleEyewashChange(idx, 'waterSupply', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.waterSupply)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Closed */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_cl_${subType}_${row.id}`} checked={row.closed === 'Good'} onChange={() => handleEyewashChange(idx, 'closed', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_cl_${subType}_${row.id}`} checked={row.closed === 'Bad'} onChange={() => handleEyewashChange(idx, 'closed', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.closed)}
+                          onChange={(e) => handleEyewashChange(idx, 'closed', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.closed)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Cover */}
                       <td className="border-r border-slate-200 text-center p-1">
-                        <input type="radio" name={`ew_cv_${subType}_${row.id}`} checked={row.cover === 'Good'} onChange={() => handleEyewashChange(idx, 'cover', 'Good')} title="✓ (Good / Ceklis)" className="w-3.5 h-3.5 text-emerald-600 accent-emerald-600 focus:ring-0 cursor-pointer" />
-                      </td>
-                      <td className="border-r border-slate-300 text-center p-1 bg-slate-50/50">
-                        <input type="radio" name={`ew_cv_${subType}_${row.id}`} checked={row.cover === 'Bad'} onChange={() => handleEyewashChange(idx, 'cover', 'Bad')} title="✗ (Bad / Silang)" className="w-3.5 h-3.5 text-rose-600 accent-rose-600 focus:ring-0 cursor-pointer" />
+                        <select
+                          value={normalizeCond(row.cover)}
+                          onChange={(e) => handleEyewashChange(idx, 'cover', e.target.value)}
+                          disabled={isLocked}
+                          className={`w-full text-center font-bold text-xs py-1 rounded focus:outline-none cursor-pointer border border-slate-200 transition ${getSelectClass(row.cover)}`}
+                        >
+                          <option value="-">-</option>
+                          <option value="✓">✓</option>
+                          <option value="✕">✕</option>
+                          <option value="N/A">N/A</option>
+                        </select>
                       </td>
 
                       {/* Remarks */}
@@ -604,6 +682,7 @@ function EyewashTabPanel({
                           value={row.remarks}
                           onChange={(e) => handleEyewashChange(idx, 'remarks', e.target.value)}
                           placeholder="Keterangan..."
+                          disabled={isLocked}
                           className="w-full bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-blue-500 text-slate-800 px-1"
                         />
                       </td>

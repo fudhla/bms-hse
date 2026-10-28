@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { usePeriod } from '../context/PeriodContext';
 import PeriodFilter from '../components/PeriodFilter';
 import { API_BASE_URL } from '../constants/periodConstants';
 
@@ -41,9 +42,8 @@ export default function Dashboard({ onSelectForm }) {
   const { user, token } = useAuth();
   const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('bms_token') : null);
 
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  // Filter Periode Bulan & Tahun dari Global State (PeriodContext)
+  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear } = usePeriod();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'complete', 'draft', 'incomplete'
 
