@@ -360,7 +360,7 @@ export default function FormSubmitFooter({
                   title="Download Format PDF Resmi"
                 >
                   <FileText className="w-4 h-4 text-white" />
-                  <span>Export PDF</span>
+                  <span className="text-white">Export PDF</span>
                 </button>
               )}
               {onExportExcel && (
@@ -371,7 +371,7 @@ export default function FormSubmitFooter({
                   title="Download Data Excel (.xlsx)"
                 >
                   <Table className="w-4 h-4 text-white" />
-                  <span>Export Excel</span>
+                  <span className="text-white">Export Excel</span>
                 </button>
               )}
               <button
@@ -380,8 +380,8 @@ export default function FormSubmitFooter({
                 disabled={submitting}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap flex-shrink-0"
               >
-                {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>{submitting ? 'Menyimpan...' : 'Simpan Perubahan (Admin)'}</span>
+                {submitting ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-white" />}
+                <span className="text-white">{submitting ? 'Menyimpan...' : 'Simpan Perubahan (Admin)'}</span>
               </button>
             </div>
           </div>
@@ -390,7 +390,7 @@ export default function FormSubmitFooter({
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border border-emerald-300 shadow-xs">
             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-emerald-600/30">
-                <CheckCircle className="w-5 h-5" />
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
                 <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
@@ -412,7 +412,7 @@ export default function FormSubmitFooter({
                   title="Download Format PDF Resmi"
                 >
                   <FileText className="w-4 h-4 text-white" />
-                  <span>Export PDF</span>
+                  <span className="text-white">Export PDF</span>
                 </button>
               )}
               {onExportExcel && (
@@ -423,7 +423,7 @@ export default function FormSubmitFooter({
                   title="Download Data Excel (.xlsx)"
                 >
                   <Table className="w-4 h-4 text-white" />
-                  <span>Export Excel</span>
+                  <span className="text-white">Export Excel</span>
                 </button>
               )}
               <button
@@ -452,7 +452,7 @@ export default function FormSubmitFooter({
                 onClick={onBack}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5 text-slate-700" />
                 <span>Kembali</span>
               </button>
 
@@ -464,7 +464,7 @@ export default function FormSubmitFooter({
                   title="Download Format PDF Resmi"
                 >
                   <FileText className="w-4 h-4 text-white" />
-                  <span>Export PDF</span>
+                  <span className="text-white">Export PDF</span>
                 </button>
               )}
 
@@ -476,7 +476,7 @@ export default function FormSubmitFooter({
                   title="Download Data Excel (.xlsx)"
                 >
                   <Table className="w-4 h-4 text-white" />
-                  <span>Export Excel</span>
+                  <span className="text-white">Export Excel</span>
                 </button>
               )}
 
@@ -488,8 +488,8 @@ export default function FormSubmitFooter({
               >
                 {/* Micro shimmer highlight on button */}
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-                <Lock className="w-4 h-4" />
-                <span>Kunci &amp; Submit Final</span>
+                <Lock className="w-4 h-4 text-white" />
+                <span className="text-white">Kunci &amp; Submit Final</span>
               </button>
             </div>
           </div>
@@ -630,8 +630,8 @@ export default function FormSubmitFooter({
                     onClick={executeApproval}
                     className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition shadow-md hover:shadow-blue-500/30 flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
                   >
-                    <Check className="w-4 h-4 stroke-[2.5]" />
-                    <span>Setujui &amp; Kunci Laporan Sekarang</span>
+                    <Check className="w-4 h-4 stroke-[2.5] text-white" />
+                    <span className="text-white">Setujui &amp; Kunci Laporan Sekarang</span>
                   </button>
                 </div>
               )}
@@ -722,8 +722,8 @@ export default function FormSubmitFooter({
                   }}
                   className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-extrabold text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4" />
-                  <span>Unduh Dokumen PDF Resmi Sekarang</span>
+                  <FileText className="w-4 h-4 text-white" />
+                  <span className="text-white">Unduh Dokumen PDF Resmi Sekarang</span>
                 </button>
               )}
 
@@ -735,8 +735,8 @@ export default function FormSubmitFooter({
                   }}
                   className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-extrabold text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Table className="w-4 h-4" />
-                  <span>Unduh Berkas Excel (.xlsx)</span>
+                  <Table className="w-4 h-4 text-white" />
+                  <span className="text-white">Unduh Berkas Excel (.xlsx)</span>
                 </button>
               )}
 

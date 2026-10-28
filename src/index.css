@@ -12,15 +12,21 @@
 .form-sheet,
 .dark .form-sheet {
   background-color: #ffffff !important;
-  color: #0f172a !important;
+  color: #0f172a;
 }
 
-/* Teks & label di dalam lembar */
-.form-sheet h1, .form-sheet h2, .form-sheet h3, .form-sheet h4,
-.form-sheet p, .form-sheet span, .form-sheet label,
-.dark .form-sheet h1, .dark .form-sheet h2, .dark .form-sheet h3, .dark .form-sheet h4,
-.dark .form-sheet p, .dark .form-sheet span, .dark .form-sheet label {
+/* Teks & label di dalam lembar (kecuali di dalam button) */
+.form-sheet :is(h1, h2, h3, h4, p, label):not(button *),
+.dark .form-sheet :is(h1, h2, h3, h4, p, label):not(button *) {
   color: #0f172a;
+}
+
+/* Pastikan elemen & tombol dengan text-white di dalam form-sheet selalu tampil putih solid */
+.form-sheet .text-white,
+.form-sheet .text-white *,
+.dark .form-sheet .text-white,
+.dark .form-sheet .text-white * {
+  color: #ffffff !important;
 }
 
 /* Sel tabel */
