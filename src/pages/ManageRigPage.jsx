@@ -15,6 +15,7 @@ import {
   User,
   Plus,
   Archive,
+  Trash2,
   RotateCcw,
   Power,
   Search,
@@ -78,6 +79,13 @@ export default function ManageRigPage() {
   // ── Modal State: Konfirmasi Arsip Rig (Soft Delete) ──
   const [archiveTarget, setArchiveTarget] = useState(null);
   const [isArchiving, setIsArchiving] = useState(false);
+
+  // ── Modal State: Konfirmasi Hapus Permanen (Proteksi Password Admin) ──
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
+  const [adminDeletePassword, setAdminDeletePassword] = useState('');
+  const [showAdminDeletePass, setShowAdminDeletePass] = useState(false);
+  const [isPermanentlyDeleting, setIsPermanentlyDeleting] = useState(false);
+  const [permanentDeleteError, setPermanentDeleteError] = useState('');
 
   // ── Helper Toast ──
   const showToast = (message, type = 'success') => {
@@ -301,6 +309,49 @@ export default function ManageRigPage() {
       showToast(err.message || 'Gagal memulihkan rig dari arsip.', 'error');
     } finally {
       setRestoringId(null);
+    }
+  };
+
+  // ── 5c. PERMANENT DELETE: Hapus Rig Permanen dengan Verifikasi Password Admin ──
+  const handleConfirmPermanentDelete = async (e) => {
+    if (e) e.preventDefault();
+    if (!permanentDeleteTarget) return;
+
+    if (!adminDeletePassword.trim()) {
+      setPermanentDeleteError('Kata sandi Administrator wajib dimasukkan!');
+      return;
+    }
+
+    setIsPermanentlyDeleting(true);
+    setPermanentDeleteError('');
+
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      };
+      const res = await fetch(`${API_BASE_URL}/api/rigs/${permanentDeleteTarget.id}/delete-permanent`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ adminPassword: adminDeletePassword.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal menghapus akun rig secara permanen.');
+      }
+
+      // Hapus akun dari state
+      setRigs(prev => prev.filter(r => r.id !== permanentDeleteTarget.id));
+      showToast(data.message || `Akun ${permanentDeleteTarget.rig_name || permanentDeleteTarget.username} berhasil dihapus permanen.`);
+      setPermanentDeleteTarget(null);
+      setAdminDeletePassword('');
+      setShowAdminDeletePass(false);
+    } catch (err) {
+      console.error('Error permanently deleting rig:', err);
+      setPermanentDeleteError(err.message || 'Gagal menghapus rig. Silakan periksa kembali kata sandi Administrator.');
+    } finally {
+      setIsPermanentlyDeleting(false);
     }
   };
 
@@ -792,16 +843,33 @@ export default function ManageRigPage() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
                           {isArchived ? (
-                            <button
-                              type="button"
-                              disabled={restoringId === acc.id}
-                              onClick={() => handleRestoreRig(acc)}
-                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs disabled:opacity-50"
-                              title="Pulihkan dan aktifkan kembali akun Rig ini"
-                            >
-                              <RotateCcw className={`w-3.5 h-3.5 ${restoringId === acc.id ? 'animate-spin' : ''}`} />
-                              <span>Pulihkan Akun</span>
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                disabled={restoringId === acc.id}
+                                onClick={() => handleRestoreRig(acc)}
+                                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Pulihkan dan aktifkan kembali akun Rig ini"
+                              >
+                                <RotateCcw className={`w-3.5 h-3.5 ${restoringId === acc.id ? 'animate-spin' : ''}`} />
+                                <span>Pulihkan Akun</span>
+                              </button>
+
+                              {/* Tombol Hapus Permanen (Agak blur & diproteksi sandi admin) */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPermanentDeleteTarget(acc);
+                                  setAdminDeletePassword('');
+                                  setShowAdminDeletePass(false);
+                                  setPermanentDeleteError('');
+                                }}
+                                className="p-1.5 rounded-lg text-rose-500/50 hover:text-rose-600 bg-rose-50/40 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/60 border border-rose-200/40 hover:border-rose-300 dark:border-rose-900/30 backdrop-blur-xs filter blur-[0.4px] hover:filter-none transition-all duration-200 cursor-pointer shadow-xs group"
+                                title="Hapus Permanen dari Database (Perlu Sandi Admin)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                              </button>
+                            </>
                           ) : (
                             <>
                               {/* Tombol Edit Password */}
@@ -837,6 +905,21 @@ export default function ManageRigPage() {
                                 title="Arsipkan Akun Rig (Soft Delete)"
                               >
                                 <Archive className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Tombol Hapus Permanen (Agak blur & diproteksi sandi admin) */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPermanentDeleteTarget(acc);
+                                  setAdminDeletePassword('');
+                                  setShowAdminDeletePass(false);
+                                  setPermanentDeleteError('');
+                                }}
+                                className="p-1.5 rounded-lg text-rose-500/50 hover:text-rose-600 bg-rose-50/40 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/60 border border-rose-200/40 hover:border-rose-300 dark:border-rose-900/30 backdrop-blur-xs filter blur-[0.4px] hover:filter-none transition-all duration-200 cursor-pointer shadow-xs group"
+                                title="Hapus Permanen dari Database (Perlu Sandi Admin)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
                               </button>
                             </>
                           )}
@@ -1167,6 +1250,106 @@ export default function ManageRigPage() {
                 Batal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: KONFIRMASI HAPUS PERMANEN (PROTEKSI PASSWORD ADMIN & BLUR BACKDROP) ── */}
+      {permanentDeleteTarget && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+          onClick={() => !isPermanentlyDeleting && setPermanentDeleteTarget(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-rose-200 dark:border-rose-900/60 shadow-2xl p-6 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Red accent strip */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-rose-600"></div>
+
+            <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-3.5 border border-rose-200 dark:border-rose-800/60 shadow-inner">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-center font-black text-base text-slate-900 dark:text-white">
+              Hapus Permanen {permanentDeleteTarget.rig_name || permanentDeleteTarget.username}?
+            </h3>
+            
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+              Tindakan ini <strong className="text-rose-600 dark:text-rose-400 font-semibold">permanen</strong> dan akan menghapus akun Rig ini sepenuhnya dari database MySQL.
+            </p>
+
+            <form onSubmit={handleConfirmPermanentDelete} className="mt-4 space-y-3">
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex items-start space-x-2 text-left">
+                <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
+                  <strong>Verifikasi Admin:</strong> Masukkan kata sandi Administrator untuk mengonfirmasi penghapusan.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 text-left">
+                  Kata Sandi Administrator Master
+                </label>
+                <div className="relative">
+                  <input
+                    type={showAdminDeletePass ? 'text' : 'password'}
+                    value={adminDeletePassword}
+                    onChange={(e) => {
+                      setAdminDeletePassword(e.target.value);
+                      setPermanentDeleteError('');
+                    }}
+                    placeholder="Masukkan sandi admin..."
+                    autoFocus
+                    className="w-full pl-9 pr-10 py-2.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-medium"
+                  />
+                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminDeletePass(!showAdminDeletePass)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showAdminDeletePass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {permanentDeleteError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 flex items-center space-x-2 text-rose-600 dark:text-rose-400 text-xs">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{permanentDeleteError}</span>
+                </div>
+              )}
+
+              <div className="pt-2 space-y-2">
+                <button
+                  type="submit"
+                  disabled={isPermanentlyDeleting || !adminDeletePassword.trim()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition cursor-pointer flex items-center justify-center space-x-2"
+                >
+                  {isPermanentlyDeleting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menghapus dari DB...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus Permanen Akun</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isPermanentlyDeleting}
+                  onClick={() => setPermanentDeleteTarget(null)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

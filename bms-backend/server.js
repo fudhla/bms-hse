@@ -732,31 +732,77 @@ app.patch('/api/rigs/:id/archive', async (req, res) => {
   }
 });
 
-// 6. DELETE /api/rigs/:id - Aliaskan DELETE ke Soft Delete (Arsip) agar data riwayat inspeksi tetap aman
-app.delete('/api/rigs/:id', async (req, res) => {
+// 6. DELETE /api/rigs/:id & POST /api/rigs/:id/delete-permanent - Hapus Akun Rig Secara Permanen dengan Verifikasi Password Admin
+const handlePermanentDeleteRig = async (req, res) => {
   try {
     const { id } = req.params;
+    const adminPassword = req.body?.adminPassword || req.query?.adminPassword;
 
+    if (!adminPassword || !String(adminPassword).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kata sandi Administrator wajib dimasukkan untuk menghapus akun Rig secara permanen!'
+      });
+    }
+
+    // 1. Ambil data Administrator untuk verifikasi kata sandi
+    let authUser = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        authUser = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      } catch (e) {}
+    }
+
+    const adminUsername = authUser?.username || 'admin_besmindo';
+    const [adminRows] = await pool.query(
+      'SELECT * FROM users WHERE role = "admin" OR LOWER(username) = LOWER(?) LIMIT 1',
+      [adminUsername]
+    );
+
+    if (adminRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Akun Administrator tidak ditemukan di database.' });
+    }
+
+    const admin = adminRows[0];
+    const trimmedAdminPass = String(adminPassword).trim();
+    const isBcrypt = admin.password && (admin.password.startsWith('$2a$') || admin.password.startsWith('$2b$'));
+    const isPassValid = isBcrypt
+      ? await bcrypt.compare(trimmedAdminPass, admin.password)
+      : (admin.password === trimmedAdminPass);
+
+    if (!isPassValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Kata sandi Administrator salah! Penghapusan akun Rig dibatalkan.'
+      });
+    }
+
+    // 2. Periksa akun Rig yang akan dihapus
     const [rows] = await pool.query('SELECT id, username, rig_name, role FROM users WHERE id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Akun rig tidak ditemukan.' });
     }
 
     if (rows[0].role === 'admin') {
-      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh diarsipkan!' });
+      return res.status(403).json({ success: false, message: 'Akun Administrator master tidak boleh dihapus!' });
     }
 
-    // Soft delete: UPDATE is_archived = 1
-    await pool.query('UPDATE users SET is_archived = 1, status = "inactive" WHERE id = ?', [id]);
+    // 3. Hapus akun permanen dari database
+    await pool.query('DELETE FROM users WHERE id = ?', [id]);
+
     return res.json({
       success: true,
-      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil diarsipkan. Rig tidak akan bisa login, namun riwayat laporannya akan tetap tersimpan aman.`
+      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil dihapus permanen dari sistem database.`
     });
   } catch (err) {
-    console.error('Error archiving rig:', err);
-    return res.status(500).json({ success: false, message: 'Gagal mengarsipkan akun rig: ' + err.message });
+    console.error('Error permanently deleting rig:', err);
+    return res.status(500).json({ success: false, message: 'Gagal menghapus akun rig: ' + err.message });
   }
-});
+};
+
+app.delete('/api/rigs/:id', handlePermanentDeleteRig);
+app.post('/api/rigs/:id/delete-permanent', handlePermanentDeleteRig);
 
 // 7. PUT /api/rigs/:id/restore - Pulihkan akun Rig dari arsip (Unarchive / Restore)
 app.put('/api/rigs/:id/restore', async (req, res) => {
