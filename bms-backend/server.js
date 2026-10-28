@@ -921,6 +921,208 @@ app.delete('/api/available-years/:year', requireAdmin, async (req, res) => {
   }
 });
 
+// ── 6.5 ENDPOINT ANALYTICS & EXECUTIVE INTELLIGENCE PER PERIODE ──
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const now = new Date();
+    let selectedMonth = parseInt(req.query.month, 10);
+    let selectedYear = parseInt(req.query.year, 10);
+    const periodQuery = req.query.period;
+
+    if (periodQuery && periodQuery.includes('-')) {
+      const parts = periodQuery.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!isNaN(y) && y >= 2000) selectedYear = y;
+      if (!isNaN(m) && m >= 1 && m <= 12) selectedMonth = m;
+    }
+
+    if (!selectedMonth || isNaN(selectedMonth)) selectedMonth = now.getMonth() + 1;
+    if (!selectedYear || isNaN(selectedYear)) selectedYear = now.getFullYear();
+
+    const monthStr = String(selectedMonth).padStart(2, '0');
+    const periodStr = `${selectedYear}-${monthStr}`;
+    const monthPattern = `${periodStr}%`;
+
+    // 1. Ambil jumlah Rig terdaftar aktif
+    const [rigUsers] = await pool.query(`
+      SELECT DISTINCT rig_name 
+      FROM users 
+      WHERE (role = 'karyawan' OR role = 'rig') 
+        AND rig_name IS NOT NULL 
+        AND rig_name != ''
+        AND (status IS NULL OR status = 'active' OR status != 'inactive')
+    `);
+    const totalRigs = rigUsers.length > 0 ? rigUsers.length : ALL_RIGS.length;
+    const totalWajib = totalRigs * 9; // 9 formulir HSE per Rig per bulan
+
+    // 2. Ambil data inspeksi untuk periode yang dipilih
+    const [inspections] = await pool.query(`
+      SELECT id, form_type, rig_no, tanggal, status, hfo_name, tool_pusher_name, form_data, created_at, updated_at
+      FROM inspections
+      WHERE period = ? 
+         OR tanggal LIKE ? 
+         OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?))
+      ORDER BY updated_at DESC, created_at DESC
+    `, [periodStr, monthPattern, selectedYear, selectedMonth]);
+
+    // 3. Klasifikasi status penyelesaian
+    const submittedList = inspections.filter(i => i.status === 'submitted');
+    const submittedCount = submittedList.length;
+    const pendingCount = Math.max(0, totalWajib - submittedCount);
+    const percentageCompleted = totalWajib > 0 ? Math.round((submittedCount / totalWajib) * 100) : 0;
+
+    const completionData = [
+      { name: 'Selesai (Submitted)', value: submittedCount, color: '#10B981' },
+      { name: 'Belum Selesai (Pending/Draft)', value: pendingCount, color: '#94A3B8' }
+    ];
+
+    // 4. Ambil temuan alat rusak (inspection_alerts) pada periode ini
+    const [alerts] = await pool.query(`
+      SELECT id, rig_no, form_type, komponen_alat, kondisi, catatan_temuan, tanggal, status_alert, created_at
+      FROM inspection_alerts
+      WHERE tanggal LIKE ? 
+         OR (YEAR(created_at) = ? AND MONTH(created_at) = ?)
+    `, [monthPattern, selectedYear, selectedMonth]);
+
+    const temuanRusakCount = alerts.length;
+
+    // Hitung temuan rusak per Rig (Top 5 Defect Rigs)
+    const rigDefectsMap = {};
+    alerts.forEach(a => {
+      const r = a.rig_no || 'Rig';
+      if (!rigDefectsMap[r]) {
+        rigDefectsMap[r] = {
+          rig: r,
+          temuanRusak: 0,
+          kategori: a.komponen_alat || a.form_type || 'Peralatan'
+        };
+      }
+      rigDefectsMap[r].temuanRusak += 1;
+    });
+
+    const topDefectRigs = Object.values(rigDefectsMap)
+      .sort((a, b) => b.temuanRusak - a.temuanRusak)
+      .slice(0, 5);
+
+    // 5. Agregasi Top 3 HFO Teraktif
+    const hfoMap = {};
+    submittedList.forEach(insp => {
+      const rawName = (
+        insp.hfo_name ||
+        insp.form_data?.hfo_name ||
+        insp.form_data?.signatures?.hfo?.name ||
+        insp.form_data?.signatures?.wfo?.name ||
+        insp.form_data?.meta?.hfoName ||
+        insp.form_data?.meta?.userName ||
+        insp.form_data?.submitted_by ||
+        ''
+      ).trim();
+
+      if (!rawName || rawName === '-' || rawName.toLowerCase() === 'null') return;
+
+      const cleanName = rawName
+        .replace(/\s*\(HSE\)/i, '')
+        .replace(/\s*\(Medic\)/i, '')
+        .replace(/\s*\(Safety\)/i, '')
+        .trim();
+
+      const rig = insp.rig_no || 'BMS Rig';
+
+      if (!hfoMap[cleanName]) {
+        hfoMap[cleanName] = { name: cleanName, rig, submittedCount: 0 };
+      }
+      hfoMap[cleanName].submittedCount += 1;
+    });
+
+    const topPerformers = Object.values(hfoMap)
+      .sort((a, b) => b.submittedCount - a.submittedCount)
+      .slice(0, 3);
+
+    // 6. Tentukan Rig Terdisiplin (jumlah form submitted terbanyak)
+    const rigSubmitMap = {};
+    submittedList.forEach(insp => {
+      if (insp.rig_no) {
+        rigSubmitMap[insp.rig_no] = (rigSubmitMap[insp.rig_no] || 0) + 1;
+      }
+    });
+
+    let bestRig = 'BMS 01';
+    let maxSub = 0;
+    for (const [r, count] of Object.entries(rigSubmitMap)) {
+      if (count > maxSub) {
+        maxSub = count;
+        bestRig = r;
+      }
+    }
+
+    const disciplinedRig = {
+      rig: bestRig,
+      count: maxSub,
+      description: maxSub > 0 ? `${maxSub} Formulir Diselesaikan` : 'Belum Ada Data'
+    };
+
+    // 7. Tren Pengisian Formulir Mingguan (Minggu 1 - 4)
+    const weekCounts = [0, 0, 0, 0];
+    submittedList.forEach(insp => {
+      let day = 1;
+      if (insp.tanggal && insp.tanggal.includes('-')) {
+        const parts = insp.tanggal.split('-');
+        if (parts.length >= 3) day = parseInt(parts[2], 10) || 1;
+      } else if (insp.created_at) {
+        day = new Date(insp.created_at).getDate();
+      }
+
+      if (day <= 7) weekCounts[0]++;
+      else if (day <= 14) weekCounts[1]++;
+      else if (day <= 21) weekCounts[2]++;
+      else weekCounts[3]++;
+    });
+
+    const targetPerWeek = Math.round(totalWajib / 4);
+    const weeklyTrends = [
+      { minggu: 'Minggu I', realisasi: weekCounts[0], target: targetPerWeek, onTimeRate: targetPerWeek > 0 ? Math.min(100, Math.round((weekCounts[0] / targetPerWeek) * 100)) : 0 },
+      { minggu: 'Minggu II', realisasi: weekCounts[1], target: targetPerWeek, onTimeRate: targetPerWeek > 0 ? Math.min(100, Math.round((weekCounts[1] / targetPerWeek) * 100)) : 0 },
+      { minggu: 'Minggu III', realisasi: weekCounts[2], target: targetPerWeek, onTimeRate: targetPerWeek > 0 ? Math.min(100, Math.round((weekCounts[2] / targetPerWeek) * 100)) : 0 },
+      { minggu: 'Minggu IV', realisasi: weekCounts[3], target: targetPerWeek, onTimeRate: targetPerWeek > 0 ? Math.min(100, Math.round((weekCounts[3] / targetPerWeek) * 100)) : 0 }
+    ];
+
+    // Format nama bulan Indonesia
+    const monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const periodLabel = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
+
+    return res.json({
+      success: true,
+      data: {
+        period: periodStr,
+        periodLabel,
+        selectedYear,
+        selectedMonth,
+        totalRigs,
+        totalWajib,
+        submittedCount,
+        pendingCount,
+        percentageCompleted,
+        temuanRusakCount,
+        disciplinedRig,
+        completionData,
+        topDefectRigs,
+        topPerformers,
+        weeklyTrends
+      }
+    });
+  } catch (err) {
+    console.error('Error in /api/analytics:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memuat analitik: ' + err.message
+    });
+  }
+});
+
 // ── 7. ENDPOINT OVERVIEW STATUS INSPEKSI (DASHBOARD & REKAP) ──────
 app.get('/api/inspections/overview', async (req, res) => {
   try {
