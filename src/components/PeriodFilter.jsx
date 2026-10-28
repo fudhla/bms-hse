@@ -449,7 +449,7 @@ export default function PeriodFilter({
                       ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/40' 
                       : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-cyan-300 border border-blue-300/40'
                   }`}>
-                    {isAdmin ? '👑 Mode Administrator' : '🛡️ Mode Karyawan Rig'}
+                    {isAdmin ? 'Mode Administrator' : 'Mode Karyawan Rig'}
                   </span>
                 </div>
               </div>

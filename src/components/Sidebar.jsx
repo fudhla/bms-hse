@@ -275,7 +275,7 @@ export default function Sidebar({
                   : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30'
               }`}
             >
-              {isAdmin ? '👑 Administrator' : `🏗️ ${user?.rig_name || 'Rig User'}`}
+              {isAdmin ? 'Administrator' : (user?.rig_name || 'Rig User')}
             </span>
           </div>
         </div>

@@ -254,7 +254,7 @@ export default function Login() {
                   {/* Admin Besmindo Card */}
                   <div className="p-2.5 bg-blue-950/60 rounded-xl border border-blue-500/30">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-extrabold text-cyan-300">👑 Admin (Admin Besmindo):</span>
+                      <span className="font-extrabold text-cyan-300">Admin (Admin Besmindo):</span>
                       <button 
                         type="button"
                         onClick={() => handleQuickFill('admin_besmindo', 'adminbesmindo')}
@@ -269,7 +269,7 @@ export default function Login() {
 
                   {/* Karyawan Rig Quick-Pick */}
                   <div className="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1.5">
-                    <div className="font-extrabold text-slate-300">🏗️ Karyawan Rig (20 Rig BMS 01 – BMS 23):</div>
+                    <div className="font-extrabold text-slate-300">Karyawan Rig (20 Rig BMS 01 – BMS 23):</div>
                     <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                       <button 
                         type="button" 

@@ -154,7 +154,7 @@ export function useInspectionForm({
             if (isAdmin) {
               setMessage({
                 type: 'info',
-                text: `👑 Mode Edit Admin Aktif: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted. Anda dapat mengubah dan menyimpan pembaruan kapan saja.`,
+                text: `Mode Edit Admin Aktif: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted. Anda dapat mengubah dan menyimpan pembaruan kapan saja.`,
               });
             } else {
               setMessage({

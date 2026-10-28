@@ -8,7 +8,6 @@ import {
   Calendar,
   CheckCircle2,
   Trophy,
-  Crown,
   Sparkles,
   RefreshCw
 } from 'lucide-react';
@@ -325,7 +324,7 @@ export default function AnalyticsPage() {
                             </p>
                             {rankStyles.isFirst && (
                               <span title="Peringkat 1 - Top Performer" className="inline-flex items-center text-amber-500">
-                                <Crown className="w-3.5 h-3.5 fill-amber-400 text-amber-500 flex-shrink-0" />
+                                <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-500 flex-shrink-0" />
                               </span>
                             )}
                           </div>

@@ -122,7 +122,7 @@ export default function Dashboard({ onSelectForm }) {
         <div>
           <div className="flex items-center space-x-2">
             <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 dark:border dark:border-blue-800">
-              {isAdmin ? '👑 Monitoring Eksekutif' : `🏗️ Rig ${user?.rig_name || ''}`}
+              {isAdmin ? 'Monitoring Eksekutif' : `Rig ${user?.rig_name || ''}`}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5">
