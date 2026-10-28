@@ -15,6 +15,7 @@ import {
   User,
   Plus,
   Archive,
+  RotateCcw,
   Power,
   Search,
   Building2,
@@ -91,7 +92,7 @@ export default function ManageRigPage() {
     setLoading(true);
     try {
       const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-      const res = await fetch(`${API_BASE_URL}/api/rigs`, { headers });
+      const res = await fetch(`${API_BASE_URL}/api/rigs?include_archived=true`, { headers });
       const result = await res.json();
       if (res.ok && result.success && Array.isArray(result.data)) {
         setRigs(result.data);
@@ -270,8 +271,8 @@ export default function ManageRigPage() {
 
       if (!res.ok || !data.success) throw new Error(data.message || 'Gagal mengarsipkan akun rig.');
 
-      // Hapus rig dari daftar aktif di state
-      setRigs(prev => prev.filter(r => r.id !== archiveTarget.id));
+      // Update state: tandai akun sebagai diarsipkan
+      setRigs(prev => prev.map(r => r.id === archiveTarget.id ? { ...r, is_archived: 1, status: 'inactive' } : r));
 
       showToast(data.message || `Akun ${archiveTarget.rig_name || archiveTarget.username} berhasil diarsipkan.`);
       setArchiveTarget(null);
@@ -279,6 +280,27 @@ export default function ManageRigPage() {
       showToast(err.message || 'Gagal mengarsipkan akun rig.', 'error');
     } finally {
       setIsArchiving(false);
+    }
+  };
+
+  // ── 5b. RESTORE: Pulihkan Akun Rig dari Arsip ──
+  const [restoringId, setRestoringId] = useState(null);
+  const handleRestoreRig = async (account) => {
+    setRestoringId(account.id);
+    try {
+      const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+      const url = `${API_BASE_URL}/api/rigs/${account.id}/restore`;
+      const res = await fetch(url, { method: 'PUT', headers });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memulihkan akun rig.');
+
+      setRigs(prev => prev.map(r => r.id === account.id ? { ...r, is_archived: 0, status: 'active' } : r));
+      showToast(data.message || `Akun ${account.rig_name || account.username} berhasil dipulihkan dari arsip!`);
+    } catch (err) {
+      showToast(err.message || 'Gagal memulihkan rig dari arsip.', 'error');
+    } finally {
+      setRestoringId(null);
     }
   };
 
@@ -336,17 +358,27 @@ export default function ManageRigPage() {
     }
   };
 
-  // ── Data Rig Non-Arsip (Hanya yang is_archived = 0) ──
+  // ── Data Rig Non-Arsip & Arsip ──
   const nonArchivedRigs = rigs.filter(r => !r.is_archived || r.is_archived === 0);
+  const archivedRigs = rigs.filter(r => r.is_archived === 1 || r.is_archived === true);
 
   // ── Filtered Rigs ──
-  const filteredRigs = nonArchivedRigs.filter((r) => {
+  const filteredRigs = rigs.filter((r) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch = 
       (r.rig_name && r.rig_name.toLowerCase().includes(q)) ||
       (r.username && r.username.toLowerCase().includes(q));
 
+    const isArchived = r.is_archived === 1 || r.is_archived === true;
     const isRigActive = r.status !== 'inactive';
+
+    if (statusFilter === 'archived') {
+      return matchesSearch && isArchived;
+    }
+
+    // Jika filter tab selain 'archived', sembunyikan akun yang diarsipkan
+    if (isArchived) return false;
+
     if (statusFilter === 'active') return matchesSearch && isRigActive;
     if (statusFilter === 'inactive') return matchesSearch && !isRigActive;
     return matchesSearch;
@@ -622,22 +654,22 @@ export default function ManageRigPage() {
             />
           </div>
 
-          <div className="flex items-center space-x-1.5 w-full sm:w-auto">
+          <div className="flex items-center space-x-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 statusFilter === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
-              Semua ({rigs.length})
+              Semua ({nonArchivedRigs.length})
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter('active')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 statusFilter === 'active'
                   ? 'bg-emerald-600 text-white'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
@@ -648,13 +680,25 @@ export default function ManageRigPage() {
             <button
               type="button"
               onClick={() => setStatusFilter('inactive')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 statusFilter === 'inactive'
                   ? 'bg-rose-600 text-white'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
               Nonaktif ({totalInactiveRigs})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('archived')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 whitespace-nowrap ${
+                statusFilter === 'archived'
+                  ? 'bg-slate-800 text-white dark:bg-slate-700 shadow-sm ring-1 ring-slate-400'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              <span>Arsip ({archivedRigs.length})</span>
             </button>
           </div>
         </div>
@@ -689,20 +733,29 @@ export default function ManageRigPage() {
                 </tr>
               ) : (
                 filteredRigs.map((acc, idx) => {
-                  const isActive = acc.status !== 'inactive';
+                  const isArchived = acc.is_archived === 1 || acc.is_archived === true;
+                  const isActive = !isArchived && acc.status !== 'inactive';
                   const rigLabel = acc.rig_name || acc.username;
 
                   return (
                     <tr
                       key={acc.id || acc.username}
                       className={`border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition ${
-                        !isActive ? 'opacity-60 bg-slate-50/50 dark:bg-slate-950/40' : ''
+                        isArchived
+                          ? 'bg-slate-50/70 dark:bg-slate-900/60'
+                          : !isActive 
+                            ? 'opacity-60 bg-slate-50/50 dark:bg-slate-950/40' 
+                            : ''
                       }`}
                     >
                       <td className="px-4 py-3 text-slate-400 font-mono">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
-                          <span className="w-7 h-7 rounded-lg bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 font-black text-[11px] flex items-center justify-center">
+                          <span className={`w-7 h-7 rounded-lg font-black text-[11px] flex items-center justify-center ${
+                            isArchived
+                              ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                              : 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                          }`}>
                             {(rigLabel.replace(/^BMS\s*/i, '') || 'R').slice(0, 3)}
                           </span>
                           <span className="font-extrabold text-slate-900 dark:text-white">
@@ -714,7 +767,12 @@ export default function ManageRigPage() {
                         {acc.username}
                       </td>
                       <td className="px-4 py-3">
-                        {isActive ? (
+                        {isArchived ? (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                            <Archive className="w-3 h-3 text-slate-400" />
+                            <span>Diarsipkan</span>
+                          </span>
+                        ) : isActive ? (
                           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>Aktif</span>
@@ -733,40 +791,55 @@ export default function ManageRigPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
-                          {/* Tombol Edit Password */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenPasswordModal(acc)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition cursor-pointer shadow-xs"
-                            title={`Ubah Password untuk ${rigLabel}`}
-                          >
-                            <Lock className="w-3 h-3" />
-                            <span>Edit Password</span>
-                          </button>
+                          {isArchived ? (
+                            <button
+                              type="button"
+                              disabled={restoringId === acc.id}
+                              onClick={() => handleRestoreRig(acc)}
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs disabled:opacity-50"
+                              title="Pulihkan dan aktifkan kembali akun Rig ini"
+                            >
+                              <RotateCcw className={`w-3.5 h-3.5 ${restoringId === acc.id ? 'animate-spin' : ''}`} />
+                              <span>Pulihkan Akun</span>
+                            </button>
+                          ) : (
+                            <>
+                              {/* Tombol Edit Password */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPasswordModal(acc)}
+                                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition cursor-pointer shadow-xs"
+                                title={`Ubah Password untuk ${rigLabel}`}
+                              >
+                                <Lock className="w-3 h-3" />
+                                <span>Edit Password</span>
+                              </button>
 
-                          {/* Tombol Toggle Status */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(acc)}
-                            className={`p-1.5 rounded-lg border transition cursor-pointer ${
-                              isActive
-                                ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300'
-                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300'
-                            }`}
-                            title={isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}
-                          >
-                            <Power className="w-3.5 h-3.5" />
-                          </button>
+                              {/* Tombol Toggle Status */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(acc)}
+                                className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                  isActive
+                                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300'
+                                }`}
+                                title={isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}
+                              >
+                                <Power className="w-3.5 h-3.5" />
+                              </button>
 
-                          {/* Tombol Arsip (Soft Delete) */}
-                          <button
-                            type="button"
-                            onClick={() => setArchiveTarget(acc)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer shadow-xs"
-                            title="Arsipkan Akun Rig (Soft Delete)"
-                          >
-                            <Archive className="w-3.5 h-3.5" />
-                          </button>
+                              {/* Tombol Arsip (Soft Delete) */}
+                              <button
+                                type="button"
+                                onClick={() => setArchiveTarget(acc)}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer shadow-xs"
+                                title="Arsipkan Akun Rig (Soft Delete)"
+                              >
+                                <Archive className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

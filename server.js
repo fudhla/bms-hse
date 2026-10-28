@@ -539,8 +539,10 @@ app.get('/api/rigs', async (req, res) => {
     `;
     const params = [];
 
-    // Filter: HANYA muat Rig yang belum diarsipkan
-    if (include_archived !== 'true') {
+    // Filter status arsip
+    if (status === 'archived') {
+      query += ` AND is_archived = 1`;
+    } else if (include_archived !== 'true') {
       query += ` AND (is_archived = 0 OR is_archived IS NULL)`;
     }
 
@@ -753,6 +755,27 @@ app.delete('/api/rigs/:id', async (req, res) => {
   } catch (err) {
     console.error('Error archiving rig:', err);
     return res.status(500).json({ success: false, message: 'Gagal mengarsipkan akun rig: ' + err.message });
+  }
+});
+
+// 7. PUT /api/rigs/:id/restore - Pulihkan akun Rig dari arsip (Unarchive / Restore)
+app.put('/api/rigs/:id/restore', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await pool.query('SELECT id, username, rig_name, role FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Akun rig tidak ditemukan.' });
+    }
+
+    await pool.query('UPDATE users SET is_archived = 0, status = "active" WHERE id = ?', [id]);
+    return res.json({
+      success: true,
+      message: `Akun ${rows[0].rig_name || rows[0].username} berhasil dipulihkan dari arsip dan kembali aktif!`
+    });
+  } catch (err) {
+    console.error('Error restoring rig from archive:', err);
+    return res.status(500).json({ success: false, message: 'Gagal memulihkan akun rig: ' + err.message });
   }
 });
 
