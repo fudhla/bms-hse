@@ -489,9 +489,9 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full h-full flex flex-col gap-6">
       {/* ── HEADER HALAMAN ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+      <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-600 dark:text-cyan-400 text-xs font-bold">
@@ -515,7 +515,7 @@ export default function ReportPage() {
 
       {/* ── NOTIFIKASI FEEDBACK EKSPOR ── */}
       {alertSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-start gap-3 shadow-xs transition-all animate-fadeIn">
+        <div className="w-full p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-start gap-3 shadow-xs transition-all animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
           <div className="text-xs">
             <span className="font-bold text-emerald-900 dark:text-emerald-200">Ekspor Berhasil! </span>
@@ -525,7 +525,7 @@ export default function ReportPage() {
       )}
 
       {/* ── CONTROL PANEL UTAMA (CARD PUTIH BESAR) ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-8">
+      <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-8">
         <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
           <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-blue-600 dark:text-cyan-400" />
@@ -537,7 +537,7 @@ export default function ReportPage() {
         </div>
 
         {/* ── 3 ELEMEN FORM FILTER (DROPDOWN / SELECT) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {/* 1. FILTER PERIODE (BULAN & TAHUN) */}
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
@@ -612,7 +612,7 @@ export default function ReportPage() {
         </div>
 
         {/* ── SUMMARY PARAMETER BOX ── */}
-        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
             <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />
             <span>
@@ -625,7 +625,7 @@ export default function ReportPage() {
         </div>
 
         {/* ── AREA TINDAKAN EKSPOR DENGAN 2 TOMBOL RAKSASA (LARGE BUTTONS) ── */}
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-2 w-full">
           <div className="flex items-center justify-between">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Tindakan Ekspor Dokumen Master
@@ -636,26 +636,26 @@ export default function ReportPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             {/* TOMBOL 1: GENERATE MASTER PDF (MERAH) */}
             <button
               type="button"
               onClick={handleGenerateMasterPDF}
               disabled={generatingPdf}
-              className="group relative flex flex-col items-center justify-center p-6 sm:p-7 rounded-2xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold shadow-xl shadow-red-600/25 transition-all duration-200 transform hover:-translate-y-1 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed text-center"
+              className="group relative flex flex-col items-center justify-center p-6 sm:p-7 rounded-2xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold shadow-xl shadow-red-600/25 transition-all duration-200 transform hover:-translate-y-1 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed text-center w-full"
             >
-              <div className="flex items-center gap-3 text-lg sm:text-xl font-black tracking-tight">
+              <div className="flex items-center gap-3 text-lg sm:text-xl font-black tracking-tight text-white">
                 {generatingPdf ? (
-                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <Loader2 className="w-7 h-7 animate-spin text-white" />
                 ) : (
-                  <FileDown className="w-7 h-7 transition-transform group-hover:scale-110" />
+                  <FileDown className="w-7 h-7 transition-transform group-hover:scale-110 text-white" />
                 )}
-                <span>{generatingPdf ? 'Sedang Memproses PDF...' : 'Generate Master PDF'}</span>
+                <span className="text-white">{generatingPdf ? 'Sedang Memproses PDF...' : 'Generate Master PDF'}</span>
               </div>
               <p className="text-xs text-red-100 font-medium mt-1.5 opacity-90">
                 Format cetak bundel dokumen resmi standar SKK Migas & Pertamina
               </p>
-              <div className="mt-3 px-3 py-1 rounded-full bg-red-700/80 text-[10px] font-mono tracking-wider">
+              <div className="mt-3 px-3 py-1 rounded-full bg-red-700/80 text-[10px] font-mono tracking-wider text-white">
                 A4 Landscape • Siap Cetak & Download
               </div>
             </button>
@@ -665,20 +665,20 @@ export default function ReportPage() {
               type="button"
               onClick={handleExportExcel}
               disabled={exportingExcel}
-              className="group relative flex flex-col items-center justify-center p-6 sm:p-7 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold shadow-xl shadow-green-600/25 transition-all duration-200 transform hover:-translate-y-1 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed text-center"
+              className="group relative flex flex-col items-center justify-center p-6 sm:p-7 rounded-2xl bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold shadow-xl shadow-green-600/25 transition-all duration-200 transform hover:-translate-y-1 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed text-center w-full"
             >
-              <div className="flex items-center gap-3 text-lg sm:text-xl font-black tracking-tight">
+              <div className="flex items-center gap-3 text-lg sm:text-xl font-black tracking-tight text-white">
                 {exportingExcel ? (
-                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <Loader2 className="w-7 h-7 animate-spin text-white" />
                 ) : (
-                  <FileSpreadsheet className="w-7 h-7 transition-transform group-hover:scale-110" />
+                  <FileSpreadsheet className="w-7 h-7 transition-transform group-hover:scale-110 text-white" />
                 )}
-                <span>{exportingExcel ? 'Sedang Menyusun Excel...' : 'Export Master Excel'}</span>
+                <span className="text-white">{exportingExcel ? 'Sedang Menyusun Excel...' : 'Export Master Excel'}</span>
               </div>
               <p className="text-xs text-green-100 font-medium mt-1.5 opacity-90">
                 Format spreadsheet (.xlsx) data matriks lengkap seluruh formulir & Rig
               </p>
-              <div className="mt-3 px-3 py-1 rounded-full bg-green-700/80 text-[10px] font-mono tracking-wider">
+              <div className="mt-3 px-3 py-1 rounded-full bg-green-700/80 text-[10px] font-mono tracking-wider text-white">
                 Multi-Sheet .XLSX • Formula & Matriks Kepatuhan
               </div>
             </button>
