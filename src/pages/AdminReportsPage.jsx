@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { exportToPdf, exportToExcel, exportMonthlyRecapExcel, FORM_META_MAP, formatDateDisplay } from '../utils/exportUtils';
 import PeriodFilter from '../components/PeriodFilter';
-import { getAvailableYears, saveAvailableYears, DEFAULT_YEARS } from '../constants/periodConstants';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -75,7 +74,6 @@ export default function AdminReportsPage() {
   const [selectedForm, setSelectedForm] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedYear, setSelectedYear] = useState('2026');
-  const [availableYears, setAvailableYears] = useState(() => getAvailableYears());
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 

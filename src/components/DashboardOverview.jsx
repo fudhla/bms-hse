@@ -48,7 +48,7 @@ export default function DashboardOverview({ onSelectForm }) {
   const { isDark } = useTheme();
 
   // Filter Periode Bulan & Tahun dari Global State (PeriodContext)
-  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, period } = usePeriod();
+  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, selectedPeriod, setSelectedPeriod } = usePeriod();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'complete', 'draft', 'incomplete'
 
@@ -186,15 +186,16 @@ export default function DashboardOverview({ onSelectForm }) {
           </p>
         </div>
 
-        {/* Filter Bulan & Tahun */}
+        {/* Filter Bulan & Tahun Native Month Picker */}
         <PeriodFilter
+          selectedPeriod={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
           selectedMonth={selectedMonth}
           onMonthChange={setSelectedMonth}
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
           onRefresh={fetchOverview}
           loading={loading}
-          isAdmin={isAdmin}
         />
       </div>
 

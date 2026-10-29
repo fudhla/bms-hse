@@ -43,7 +43,7 @@ export default function Dashboard({ onSelectForm }) {
   const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('bms_token') : null);
 
   // Filter Periode Bulan & Tahun dari Global State (PeriodContext)
-  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear } = usePeriod();
+  const { selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, selectedPeriod, setSelectedPeriod } = usePeriod();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'complete', 'draft', 'incomplete'
 
@@ -134,13 +134,14 @@ export default function Dashboard({ onSelectForm }) {
         </div>
 
         <PeriodFilter
+          selectedPeriod={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
           selectedMonth={selectedMonth}
           onMonthChange={setSelectedMonth}
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
           onRefresh={fetchDashboardData}
           loading={loading}
-          isAdmin={isAdmin}
         />
       </div>
 
