@@ -22,7 +22,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePeriod } from '../context/PeriodContext';
-import PeriodFilter from '../components/PeriodFilter';
+import CustomMonthPicker from '../components/CustomMonthPicker';
 import { API_BASE_URL } from '../constants/periodConstants';
 
 // ── 9 FORMULIR STANDAR HSE ──────────────────────────────────────────
@@ -133,7 +133,7 @@ export default function Dashboard({ onSelectForm }) {
           </p>
         </div>
 
-        <PeriodFilter
+        <CustomMonthPicker
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
           selectedMonth={selectedMonth}

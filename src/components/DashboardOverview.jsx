@@ -26,7 +26,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePeriod } from '../context/PeriodContext';
-import PeriodFilter from './PeriodFilter';
+import CustomMonthPicker from './CustomMonthPicker';
 import { MONTH_NAMES, API_BASE_URL } from '../constants/periodConstants';
 
 // ── 9 FORMULIR STANDAR INSPEKSI HSE ─────────────────────────────
@@ -186,8 +186,8 @@ export default function DashboardOverview({ onSelectForm }) {
           </p>
         </div>
 
-        {/* Filter Bulan & Tahun Native Month Picker */}
-        <PeriodFilter
+        {/* Filter Bulan & Tahun Custom SaaS Month Picker */}
+        <CustomMonthPicker
           selectedPeriod={selectedPeriod}
           onPeriodChange={setSelectedPeriod}
           selectedMonth={selectedMonth}
