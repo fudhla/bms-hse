@@ -60,8 +60,8 @@ export default function AnalyticsPage() {
   // Fetch data analytics riil dari backend setiap kali selectedPeriod berubah
   useEffect(() => {
     let isMounted = true;
-    const fetchAnalytics = async () => {
-      setLoading(true);
+    const fetchAnalytics = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res = await fetch(`/api/analytics?period=${selectedPeriod}`);
         const json = await res.json();
@@ -71,12 +71,23 @@ export default function AnalyticsPage() {
       } catch (err) {
         console.warn('Gagal memuat data analitik:', err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted && !silent) setLoading(false);
       }
     };
 
+    // Panggilan API pertama kali saat halaman dibuka
     fetchAnalytics();
-    return () => { isMounted = false; };
+
+    // Polling data baru setiap 1 menit (60000 ms) agar tidak membebani database
+    const pollingInterval = setInterval(() => {
+      fetchAnalytics(true);
+    }, 60000);
+
+    // Cleanup wajib agar tidak dobel request saat pindah halaman
+    return () => {
+      isMounted = false;
+      clearInterval(pollingInterval);
+    };
   }, [selectedPeriod]);
 
   // Ekstraksi nilai metrik dari analyticsData dengan nilai default yang aman

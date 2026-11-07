@@ -78,9 +78,9 @@ export default function AdminReportsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch data dari backend
-  const fetchInspections = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchInspections = async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError(null);
     try {
       const res = await fetch('/api/inspections');
       const json = await res.json();
@@ -91,9 +91,9 @@ export default function AdminReportsPage() {
       }
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(err.message);
+      if (!silent) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -115,6 +115,13 @@ export default function AdminReportsPage() {
       }
     }
     syncYears();
+
+    // Polling data rekap inspeksi setiap 1 menit (60000 ms)
+    const pollingInterval = setInterval(() => {
+      fetchInspections(true);
+    }, 60000);
+
+    return () => clearInterval(pollingInterval);
   }, []);
 
   // Filter Data di sisi client

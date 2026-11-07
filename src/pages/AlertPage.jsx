@@ -100,9 +100,9 @@ export default function AlertPage() {
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
   // Fetch alerts from backend
-  const fetchAlerts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchAlerts = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError(null);
     try {
       // Build query string
       const params = new URLSearchParams();
@@ -138,14 +138,25 @@ export default function AlertPage() {
       );
     } catch (err) {
       console.error('Error fetching alerts:', err);
-      setError(err.message || 'Gagal memuat data dari database.');
+      if (!silent) {
+        setError(err.message || 'Gagal memuat data dari database.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [isAdmin, userRig, selectedRig]);
 
   useEffect(() => {
+    // Panggilan API pertama kali saat halaman dibuka
     fetchAlerts();
+
+    // Polling data baru setiap 1 menit (60000 ms)
+    const pollingInterval = setInterval(() => {
+      fetchAlerts(true);
+    }, 60000);
+
+    // Cleanup wajib agar tidak dobel request saat pindah halaman
+    return () => clearInterval(pollingInterval);
   }, [fetchAlerts]);
 
   // Unique Rigs for Dropdown

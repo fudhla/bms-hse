@@ -176,7 +176,8 @@ export default function Sidebar({
       }
     };
     fetchBadge();
-    const interval = setInterval(fetchBadge, 15000);
+    // Polling badge unread alert setiap 1 menit (60000 ms) agar aman dan tidak membebani database
+    const interval = setInterval(fetchBadge, 60000);
     return () => {
       isMounted = false;
       clearInterval(interval);

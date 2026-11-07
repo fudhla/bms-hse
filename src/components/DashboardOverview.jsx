@@ -91,8 +91,8 @@ export default function DashboardOverview({ onSelectForm }) {
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
-  const fetchOverview = async () => {
-    setLoading(true);
+  const fetchOverview = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError('');
 
     try {
@@ -115,14 +115,25 @@ export default function DashboardOverview({ onSelectForm }) {
       }
     } catch (err) {
       console.error('Error fetching overview:', err);
-      setError(err.message || 'Gagal terhubung ke backend BMS HSE. Pastikan server Node.js dan MySQL aktif.');
+      if (!silent) {
+        setError(err.message || 'Gagal terhubung ke backend BMS HSE. Pastikan server Node.js dan MySQL aktif.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Panggilan API pertama kali saat halaman dibuka
     fetchOverview();
+
+    // Polling data baru setiap 1 menit (60000 ms)
+    const pollingInterval = setInterval(() => {
+      fetchOverview(true);
+    }, 60000);
+
+    // Cleanup wajib agar tidak dobel request saat pindah halaman
+    return () => clearInterval(pollingInterval);
   }, [selectedMonth, selectedYear, isAdmin, userRigName]);
 
   // Filter Rigs untuk Admin

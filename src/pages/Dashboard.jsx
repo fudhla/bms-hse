@@ -60,8 +60,8 @@ export default function Dashboard({ onSelectForm }) {
   ];
 
   // ── Fetch Data Matriks Rig Dinamis dari Database Backend ──
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError('');
 
     try {
@@ -82,14 +82,25 @@ export default function Dashboard({ onSelectForm }) {
       setRigList(data.rigs || []);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError(err.message || 'Gagal terhubung ke database. Pastikan server backend MySQL aktif.');
+      if (!silent) {
+        setError(err.message || 'Gagal terhubung ke database. Pastikan server backend MySQL aktif.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Panggilan API pertama kali saat halaman dibuka
     fetchDashboardData();
+
+    // Polling data baru setiap 1 menit (60000 ms)
+    const pollingInterval = setInterval(() => {
+      fetchDashboardData(true);
+    }, 60000);
+
+    // Cleanup wajib agar tidak dobel request saat pindah halaman
+    return () => clearInterval(pollingInterval);
   }, [selectedMonth, selectedYear]);
 
   // ── Perhitungan Metrik Indikator Atas Dinamis ──

@@ -107,8 +107,8 @@ export default function ManageRigPage() {
   };
 
   // ── 1. READ: Fetch Data Rigs dari MySQL Backend ──
-  const fetchRigs = async () => {
-    setLoading(true);
+  const fetchRigs = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
       const res = await fetch(`${API_BASE_URL}/api/rigs?include_archived=true`, { headers });
@@ -120,14 +120,23 @@ export default function ManageRigPage() {
       }
     } catch (err) {
       console.error('Error fetching rigs:', err);
-      showToast(err.message || 'Gagal terhubung ke database rig.', 'error');
+      if (!silent) showToast(err.message || 'Gagal terhubung ke database rig.', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Panggilan API pertama kali saat halaman dibuka
     fetchRigs();
+
+    // Polling data rig setiap 1 menit (60000 ms) agar data selalu sinkron tanpa membebani DB
+    const pollingInterval = setInterval(() => {
+      fetchRigs(true);
+    }, 60000);
+
+    // Cleanup wajib agar tidak dobel request saat pindah halaman
+    return () => clearInterval(pollingInterval);
   }, []);
 
   // ── 2. CREATE: Tambah Akun Rig Baru ──

@@ -14,7 +14,7 @@ import { validateInspectionFormStrict } from '../components/forms/ValidationModa
  *  - Role-Based Access Control (RBAC):
  *      - User Rig: Terkunci (read-only) jika status = 'submitted'
  *      - Admin: Memiliki hak istimewa untuk mengedit & memperbarui form yang sudah 'submitted'
- *  - Auto-save debounced 1.2 detik (untuk draft maupun admin edit)
+ *  - Auto-save aman berkala 1 menit (60000 ms) saat form terisi / berubah
  *  - Final submit & Update Data (Admin)
  *  - Export PDF / Excel
  * ─────────────────────────────────────────────────────────────────────────────
@@ -49,6 +49,7 @@ export function useInspectionForm({
 
   const debounceTimerRef = useRef(null);
   const isFirstRender    = useRef(true);
+  const isDirtyRef       = useRef(false);
 
   const { selectedMonth: globalMonth, selectedYear: globalYear } = usePeriod();
 
@@ -323,24 +324,37 @@ export function useInspectionForm({
     }
   }, [recordId, isLocked, isAdmin, adminEditMode, status, formId, formType, formCode, effectiveRigNo, rigNo, effectivePeriod, effectiveMonth, effectiveYear, meta, items, extraPayload, user, authToken]);
 
-  // ─── 3. Debounced Auto-Save ─────────────────────────────────────────────────
+  // ─── 3. Auto-Save Aman (Interval 1 Menit & Pembersihan Memori) ───────────────
   useEffect(() => {
     if (!initialLoaded) return;
-    if (isLocked && !isAdmin) return;
-
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
+    isDirtyRef.current = true;
+  }, [meta, items, initialLoaded]);
 
-    setSaveState('saving');
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      saveToBackend(status === 'submitted' ? 'submitted' : 'draft');
-    }, 1200);
+  useEffect(() => {
+    if (!initialLoaded) return;
+    if (isLocked && !isAdmin) return;
 
-    return () => { if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current); };
-  }, [meta, items, initialLoaded, isLocked, isAdmin, status, saveToBackend]);
+    // Polling auto-save berkala setiap 60 detik (60000 ms) saat terdapat perubahan data
+    const autoSaveInterval = setInterval(() => {
+      if (isDirtyRef.current) {
+        setSaveState('saving');
+        saveToBackend(status === 'submitted' ? 'submitted' : 'draft').then((success) => {
+          if (success) {
+            isDirtyRef.current = false;
+          }
+        });
+      }
+    }, 60000); // 1 menit (60000 ms) aman untuk server database
+
+    // Cleanup interval wajib saat komponen di-unmount agar tidak ada memory leak
+    return () => {
+      clearInterval(autoSaveInterval);
+    };
+  }, [initialLoaded, isLocked, isAdmin, status, saveToBackend]);
 
   // ─── 4. Pre-submit Validation Helper (Global) ───────────────────────────────
   const validateBeforeSubmit = useCallback(() => {
