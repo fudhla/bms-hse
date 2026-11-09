@@ -6,6 +6,7 @@ import { generateAparPDF, generateAparExcel } from '../../utils/exportUtils';
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // ── 1. TEMPLATE DEFAULT BARIS APAR STANDAR (14 UNIT) ──────────────────────
 export const STANDAR_APAR_ITEMS = [
@@ -96,6 +97,7 @@ function AparTabPanel({
   const formType = `apar_${subType}`;
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -619,6 +621,8 @@ function AparTabPanel({
           onExportPdf={handleExportAparPdf}
           onExportExcel={handleExportAparExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

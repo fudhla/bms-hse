@@ -15,6 +15,7 @@ import { generateHarnessPDF, generateHarnessExcel } from '../../utils/exportUtil
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection, { HARNESS_SIGNATURE_ROLES } from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // 9 GAMBAR REFERENSI BAWAAN GLOBAL (STATIC ASSETS DI /public/images/harness/)
 export const defaultHarnessImages = {
@@ -183,6 +184,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
   ]);
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -829,6 +831,8 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           onExportPdf={handleExportHarnessPdf}
           onExportExcel={handleExportHarnessExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
 

@@ -6,6 +6,7 @@ import { generateOxigentPDF, generateOxigentExcel } from '../../utils/exportUtil
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // Template baris awal
 const CREATE_EMPTY_ROW = (id) => ({
@@ -54,6 +55,7 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
   ]);
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -525,6 +527,8 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
           onExportPdf={handleExportOxigentPdf}
           onExportExcel={handleExportOxigentExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

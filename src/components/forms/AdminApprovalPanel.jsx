@@ -10,27 +10,44 @@ import {
   RefreshCw,
   MessageSquare
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../constants/periodConstants';
 
 export default function AdminApprovalPanel({
   isAdmin = false,
-  statusLaporan = 'Draft',
+  statusLaporan,
+  currentStatus: propCurrentStatus,
+  reportStatus,
+  status,
   catatanAdmin = '',
+  adminNote = '',
   onReviewReport,
+  onReview,
+  onReviewComplete,
+  reportId,
+  recordId,
+  currentReportId,
   submitting = false,
   className = ''
 }) {
+  const { user, token } = useAuth();
   const [modalMode, setModalMode] = useState(null); // 'Revision' | 'Rejected' | null
   const [noteInput, setNoteInput] = useState('');
   const [modalError, setModalError] = useState('');
+  const [localSubmitting, setLocalSubmitting] = useState(false);
 
-  // Hanya tampilkan jika pengguna adalah Admin
-  if (!isAdmin) return null;
+  // Verifikasi peran admin: dari prop atau dari session login user
+  const effectiveIsAdmin = isAdmin || user?.role === 'admin' || user?.username === 'admin_besmindo';
+  if (!effectiveIsAdmin) return null;
 
-  const currentStatus = statusLaporan || 'Draft';
+  // Resolusi status laporan & catatan admin
+  const currentStatus = propCurrentStatus || reportStatus || statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft') || 'Draft';
+  const effectiveCatatan = catatanAdmin || adminNote || '';
+  const isBusy = submitting || localSubmitting;
 
   const handleOpenModal = (mode) => {
     setModalMode(mode);
-    setNoteInput(mode === 'Revision' ? (catatanAdmin || '') : '');
+    setNoteInput(mode === 'Revision' ? (effectiveCatatan || '') : '');
     setModalError('');
   };
 
@@ -40,25 +57,66 @@ export default function AdminApprovalPanel({
     setModalError('');
   };
 
+  const executeReview = async (mode, note) => {
+    if (onReviewReport) {
+      const res = await onReviewReport(mode, note);
+      if (onReviewComplete) onReviewComplete(mode, note);
+      return res;
+    }
+    if (onReview) {
+      const res = await onReview(mode, note);
+      if (onReviewComplete) onReviewComplete(mode, note);
+      return res;
+    }
+    const targetId = reportId || recordId || currentReportId;
+    if (targetId) {
+      try {
+        setLocalSubmitting(true);
+        const res = await fetch(`${API_BASE_URL}/api/reports/${targetId}/review`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            status_laporan: mode,
+            catatan_admin: note
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Gagal memperbarui status review laporan.');
+        }
+        if (onReviewComplete) {
+          onReviewComplete(mode, note);
+        }
+        return true;
+      } catch (err) {
+        console.error('Review API error:', err);
+        alert(err.message || 'Gagal memproses review.');
+        return false;
+      } finally {
+        setLocalSubmitting(false);
+      }
+    }
+    return false;
+  };
+
   const handleConfirmAction = async () => {
     if (modalMode === 'Revision' && !noteInput.trim()) {
       setModalError('Wajib menuliskan catatan revisi agar pekerja Rig mengetahui bagian mana yang perlu diperbaiki!');
       return;
     }
 
-    if (onReviewReport) {
-      const success = await onReviewReport(modalMode, noteInput.trim());
-      if (success) {
-        handleCloseModal();
-      }
+    const success = await executeReview(modalMode, noteInput.trim());
+    if (success !== false) {
+      handleCloseModal();
     }
   };
 
   const handleQuickApprove = async () => {
     if (window.confirm('Apakah Anda yakin ingin MENYETUJUI (Approve) laporan inspeksi ini? Dokumen akan ditandai sah.')) {
-      if (onReviewReport) {
-        await onReviewReport('Approved', '');
-      }
+      await executeReview('Approved', '');
     }
   };
 
@@ -124,12 +182,12 @@ export default function AdminApprovalPanel({
             </p>
 
             {/* Jika ada catatan admin sebelumnya */}
-            {catatanAdmin && (
+            {effectiveCatatan && (
               <div className="mt-2 text-xs p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
                 <MessageSquare className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <span className="font-bold text-amber-700 dark:text-amber-400">Catatan Admin Aktif:</span>
-                  <span className="italic ml-1 text-slate-800 dark:text-slate-200 font-medium">"{catatanAdmin}"</span>
+                  <span className="italic ml-1 text-slate-800 dark:text-slate-200 font-medium">"{effectiveCatatan}"</span>
                 </div>
               </div>
             )}
@@ -142,11 +200,11 @@ export default function AdminApprovalPanel({
           <button
             type="button"
             onClick={handleQuickApprove}
-            disabled={submitting || currentStatus === 'Approved'}
+            disabled={isBusy || currentStatus === 'Approved'}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             title="Setujui laporan ini secara resmi"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            {isBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             <span>Setujui (Approve)</span>
           </button>
 
@@ -154,7 +212,7 @@ export default function AdminApprovalPanel({
           <button
             type="button"
             onClick={() => handleOpenModal('Revision')}
-            disabled={submitting}
+            disabled={isBusy}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
             title="Kembalikan laporan ke User Rig untuk direvisi"
           >
@@ -166,7 +224,7 @@ export default function AdminApprovalPanel({
           <button
             type="button"
             onClick={() => handleOpenModal('Rejected')}
-            disabled={submitting || currentStatus === 'Rejected'}
+            disabled={isBusy || currentStatus === 'Rejected'}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             title="Tolak laporan inspeksi ini"
           >
@@ -260,7 +318,7 @@ export default function AdminApprovalPanel({
               <button
                 type="button"
                 onClick={handleCloseModal}
-                disabled={submitting}
+                disabled={isBusy}
                 className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-bold text-xs transition cursor-pointer"
               >
                 Batal
@@ -269,14 +327,14 @@ export default function AdminApprovalPanel({
               <button
                 type="button"
                 onClick={handleConfirmAction}
-                disabled={submitting}
+                disabled={isBusy}
                 className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-bold text-xs transition shadow-sm cursor-pointer disabled:opacity-50 ${
                   modalMode === 'Revision'
                     ? 'bg-amber-600 hover:bg-amber-700'
                     : 'bg-rose-600 hover:bg-rose-700'
                 }`}
               >
-                {submitting ? (
+                {isBusy ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Send className="w-3.5 h-3.5" />

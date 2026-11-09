@@ -169,18 +169,6 @@ export default function FormActionHeader({
         </div>
       )}
 
-      {/* ── PANEL KEPUTUSAN ADMINISTRATOR (JIKA ADMIN & CALLBACK REVIEW TERSEDIA) ── */}
-      {isAdmin && onReviewReport && (status === 'submitted' || statusLaporan !== 'Draft') && (
-        <div className="mb-4">
-          <AdminApprovalPanel
-            statusLaporan={statusLaporan}
-            catatanAdmin={catatanAdmin}
-            onReview={onReviewReport}
-            submitting={submitting}
-          />
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 mb-4 border-b border-slate-300">
         {/* Tombol Kembali & Status Draft/Submitted/Admin Edit */}
         <div className="flex items-center flex-wrap gap-2.5">

@@ -6,6 +6,7 @@ import { generateScbaPDF, generateScbaExcel } from '../../utils/exportUtils';
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // Helper pembuat baris awal SCBA & ELSA
 const createScbaRow = (id = Date.now()) => ({
@@ -104,6 +105,7 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
   const combinedItems = [...scbaItems, ...elsaItems];
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -868,6 +870,8 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
           onExportPdf={handleExportScbaPdf}
           onExportExcel={handleExportScbaExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

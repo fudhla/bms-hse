@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { validateInspectionSignatures } from './DigitalSignatureSection';
 import ValidationModal, { validateInspectionFormStrict } from './ValidationModal';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 export default function FormSubmitFooter({
   onBack,
@@ -39,7 +40,12 @@ export default function FormSubmitFooter({
   catatanAdmin = '',
   onExportPdf,
   onExportExcel,
-  saveState
+  saveState,
+  onReviewReport,
+  onReview,
+  onReviewComplete,
+  recordId,
+  reportId
 }) {
   // Modal States
   const [showValidationModal, setShowValidationModal] = useState(false);
@@ -342,6 +348,25 @@ export default function FormSubmitFooter({
 
       {/* ── FOOTER BAR FORMULIR ── */}
       <div className="pt-6 border-t border-slate-300">
+        {/* ── PANEL KEPUTUSAN ADMINISTRATOR (APPROVAL WORKFLOW) ── */}
+        {/* Ditampilkan tepat di atas kotak Mode Pembaruan Data jika pengguna adalah Administrator dan form berstatus Submitted (atau sudah memiliki status review) */}
+        {isAdmin && (status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || statusLaporan === 'Revision' || statusLaporan === 'Rejected') && (
+          <div className="mb-4">
+            <AdminApprovalPanel
+              isAdmin={isAdmin}
+              statusLaporan={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
+              currentStatus={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
+              reportStatus={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
+              catatanAdmin={catatanAdmin}
+              onReviewReport={onReviewReport || onReview}
+              onReviewComplete={onReviewComplete}
+              reportId={recordId || reportId}
+              recordId={recordId || reportId}
+              submitting={submitting}
+            />
+          </div>
+        )}
+
         {/* KASUS 1: ADMIN EDIT PADA FORM YANG SUDAH SUBMITTED */}
         {isAdmin && status === 'submitted' ? (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-blue-50/70 border border-blue-300">

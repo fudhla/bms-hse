@@ -6,6 +6,7 @@ import { generateSpillKitPDF, generateSpillKitExcel } from '../../utils/exportUt
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // Daftar item bawaan sesuai formulir fisik
 const DEFAULT_ITEMS = [
@@ -48,6 +49,7 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
   const [items, setItems] = useState(DEFAULT_ITEMS);
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -425,6 +427,8 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
           onExportPdf={handleExportSpillKitPdf}
           onExportExcel={handleExportSpillKitExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

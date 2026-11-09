@@ -748,6 +748,19 @@ export default function AdminReportsPage() {
                 </div>
               </div>
 
+              {/* Panel Keputusan Administrator (Approval Workflow) */}
+              <div className="my-2">
+                <AdminApprovalPanel
+                  isAdmin={true}
+                  statusLaporan={selectedInspection.status_laporan || (selectedInspection.status === 'submitted' ? 'Submitted' : 'Draft')}
+                  currentStatus={selectedInspection.status_laporan || (selectedInspection.status === 'submitted' ? 'Submitted' : 'Draft')}
+                  reportStatus={selectedInspection.status_laporan || (selectedInspection.status === 'submitted' ? 'Submitted' : 'Draft')}
+                  catatanAdmin={selectedInspection.catatan_admin || ''}
+                  onReviewReport={(newStatus, note) => handleReviewReport(selectedInspection.id, newStatus, note)}
+                  reportId={selectedInspection.id}
+                />
+              </div>
+
               {/* Rekomendasi Section */}
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="font-bold text-[11px] text-slate-700 dark:text-slate-300">

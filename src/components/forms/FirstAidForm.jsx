@@ -6,6 +6,7 @@ import { generateFirstAidPDF, generateFirstAidExcel } from '../../utils/exportUt
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // Daftar 21 Item Standar Kotak P3K
 const INITIAL_ITEMS = [
@@ -61,6 +62,7 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
   const [items, setItems] = useState(INITIAL_ITEMS);
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -388,6 +390,8 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
           onExportPdf={handleExportFirstAidPdf}
           onExportExcel={handleExportFirstAidExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

@@ -6,6 +6,7 @@ import { generateStretcherPDF, generateStretcherExcel } from '../../utils/export
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 const INITIAL_CHECKLIST = [
   { id: 1, text: 'Apakah access penempatan stretcher bebas dari penghalang ?', condition: '', remarks: '' },
@@ -49,6 +50,7 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
   const [items, setItems] = useState(INITIAL_CHECKLIST);
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -357,6 +359,8 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
           onExportPdf={handleExportStretcherPdf}
           onExportExcel={handleExportStretcherExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

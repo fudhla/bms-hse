@@ -6,6 +6,7 @@ import { generateEyewashPDF, generateEyewashExcel } from '../../utils/exportUtil
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // ── 1. INISIALISASI DATA DEFAULT CHECKLIST (IDENTIK UNTUK STANDAR & HYBRID) ──
 // Sesuai mandat: ISI TABEL TETAP SAMA untuk kedua tab (tidak digandakan).
@@ -85,6 +86,7 @@ function EyewashTabPanel({
   const formType = `eyewash_${subType}`;
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -732,6 +734,8 @@ function EyewashTabPanel({
           onExportPdf={handleExportEyewashPdf}
           onExportExcel={handleExportEyewashExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>

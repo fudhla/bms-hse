@@ -6,6 +6,7 @@ import { generateApdPDF, generateApdExcel } from '../../utils/exportUtils';
 import FormActionHeader from './FormActionHeader';
 import FormSubmitFooter from './FormSubmitFooter';
 import DigitalSignatureSection from './DigitalSignatureSection';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 const APD_COLUMNS = [
   { key: 'topi_topguard', label: 'Top Guard', group: 'Topi keselamatan' },
@@ -68,6 +69,7 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
   );
 
   const {
+    recordId,
     status,
     statusLaporan,
     catatanAdmin,
@@ -539,6 +541,8 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
           onExportPdf={handleExportApdPdf}
           onExportExcel={handleExportApdExcel}
           saveState={saveState}
+          onReviewReport={handleReviewReport}
+          recordId={recordId}
         />
       </form>
     </div>
