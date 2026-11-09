@@ -49,6 +49,8 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -57,6 +59,7 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload
   } = useInspectionForm({
     formId: 'spillkit',
@@ -173,6 +176,10 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
         adminEditMode={adminEditMode}
         onExportPdf={handleExportSpillKitPdf}
         onExportExcel={handleExportSpillKitExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Notification */}
@@ -412,6 +419,9 @@ export default function SpillKitForm({ onBack, currentUser, overrideRigNo = null
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportSpillKitPdf}
           onExportExcel={handleExportSpillKitExcel}
           saveState={saveState}

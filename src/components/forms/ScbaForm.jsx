@@ -105,6 +105,8 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -113,6 +115,7 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload,
     initialData
   } = useInspectionForm({
@@ -399,6 +402,10 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
         adminEditMode={adminEditMode}
         onExportPdf={handleExportScbaPdf}
         onExportExcel={handleExportScbaExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -855,6 +862,9 @@ export default function ScbaForm({ onBack, currentUser, overrideRigNo = null, vi
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportScbaPdf}
           onExportExcel={handleExportScbaExcel}
           saveState={saveState}

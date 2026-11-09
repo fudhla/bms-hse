@@ -97,6 +97,8 @@ function AparTabPanel({
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -105,6 +107,7 @@ function AparTabPanel({
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload,
     initialData,
     initialLoaded
@@ -216,6 +219,10 @@ function AparTabPanel({
         adminEditMode={adminEditMode}
         onExportPdf={handleExportAparPdf}
         onExportExcel={handleExportAparExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status Pesan */}
@@ -606,6 +613,9 @@ function AparTabPanel({
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportAparPdf}
           onExportExcel={handleExportAparExcel}
           saveState={saveState}

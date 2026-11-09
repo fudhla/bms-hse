@@ -39,6 +39,8 @@ export function useInspectionForm({
 
   const [recordId, setRecordId]         = useState(null);
   const [status, setStatus]             = useState('draft'); // 'draft' | 'submitted'
+  const [statusLaporan, setStatusLaporan] = useState('Draft'); // 'Draft' | 'Submitted' | 'Approved' | 'Revision' | 'Rejected'
+  const [catatanAdmin, setCatatanAdmin]   = useState('');
   const [isLocked, setIsLocked]         = useState(false);
   const [adminEditMode, setAdminEditMode] = useState(false);
   const [submitting, setSubmitting]     = useState(false);
@@ -88,12 +90,30 @@ export function useInspectionForm({
           const row   = result.data;
           setInitialData(row);
           const isSub = row.status === 'submitted';
+          const rowStatusLaporan = row.status_laporan || (isSub ? 'Submitted' : 'Draft');
+          const rowCatatanAdmin = row.catatan_admin || '';
 
           setRecordId(row.id);
           setStatus(row.status || 'draft');
+          setStatusLaporan(rowStatusLaporan);
+          setCatatanAdmin(rowCatatanAdmin);
 
-          // RBAC Logic: Jika submitted, terkunci HANYA untuk User biasa (bukan Admin)
-          if (isSub) {
+          // RBAC & Approval Workflow Logic:
+          // 1. Jika 'Revision': KUNCI DIBUKA (isLocked = false) agar User Rig DAPAT MENGEDIT KEMBALI formulir!
+          // 2. Jika 'Approved': Terkunci untuk User Rig (Admin tetap punya akses pengawasan)
+          // 3. Jika 'Submitted': Terkunci untuk User Rig, mode edit terbuka bagi Admin
+          if (rowStatusLaporan === 'Revision') {
+            setIsLocked(false);
+            setAdminEditMode(isAdmin);
+          } else if (rowStatusLaporan === 'Approved') {
+            if (isAdmin) {
+              setIsLocked(false);
+              setAdminEditMode(true);
+            } else {
+              setIsLocked(true);
+              setAdminEditMode(false);
+            }
+          } else if (isSub) {
             if (isAdmin) {
               setIsLocked(false);
               setAdminEditMode(true);
@@ -151,16 +171,31 @@ export function useInspectionForm({
           }
 
           // ── Pesan status ────────────────────────────────────────────────────
-          if (isSub) {
+          if (rowStatusLaporan === 'Revision') {
+            setMessage({
+              type: 'warning',
+              text: `⚠️ Perhatian: Laporan dikembalikan oleh Admin untuk direvisi. Catatan: "${rowCatatanAdmin || 'Harap periksa dan lengkapi kembali data'}"`,
+            });
+          } else if (rowStatusLaporan === 'Approved') {
+            setMessage({
+              type: 'success',
+              text: `✓ Laporan resmi Disetujui (Approved) oleh Administrator. Dokumen telah tervalidasi sah.`,
+            });
+          } else if (rowStatusLaporan === 'Rejected') {
+            setMessage({
+              type: 'error',
+              text: `✗ Laporan Ditolak (Rejected) oleh Administrator. Silakan hubungi pengawas HSE untuk arahan lebih lanjut.`,
+            });
+          } else if (isSub) {
             if (isAdmin) {
               setMessage({
                 type: 'info',
-                text: `Mode Edit Admin Aktif: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted. Anda dapat mengubah dan menyimpan pembaruan kapan saja.`,
+                text: `Mode Edit Admin Aktif: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted. Anda dapat meninjau, menyetujui, mengembalikan, atau mengedit laporan.`,
               });
             } else {
               setMessage({
                 type: 'success',
-                text: `✓ Formulir Rig ${effectiveRigNo} periode ${effectiveMonth}/${effectiveYear} telah disubmit & terkunci (Read-Only).`,
+                text: `✓ Formulir Rig ${effectiveRigNo} periode ${effectiveMonth}/${effectiveYear} telah disubmit & terkunci (Read-Only). Menunggu persetujuan Admin.`,
               });
             }
           } else {
@@ -205,6 +240,8 @@ export function useInspectionForm({
     setInitialLoaded(false);
     setRecordId(null);
     setStatus('draft');
+    setStatusLaporan('Draft');
+    setCatatanAdmin('');
     setIsLocked(false);
     setAdminEditMode(false);
     setMessage({ type: '', text: '' });
@@ -291,7 +328,10 @@ export function useInspectionForm({
       if (data.id) setRecordId(data.id);
 
       if (customStatus === 'submitted' || (isAdmin && status === 'submitted')) {
+        const wasRevision = statusLaporan === 'Revision';
         setStatus('submitted');
+        setStatusLaporan('Submitted');
+        setCatatanAdmin('');
         if (isAdmin) {
           setIsLocked(false);
           setAdminEditMode(true);
@@ -304,7 +344,9 @@ export function useInspectionForm({
           setAdminEditMode(false);
           setMessage({
             type: 'success',
-            text: '✓ Inspeksi berhasil disimpan final dan resmi terkirim ke Admin!',
+            text: wasRevision
+              ? '✓ Laporan revisi berhasil dikirim ulang ke Admin dan kembali menunggu persetujuan!'
+              : '✓ Inspeksi berhasil disimpan final dan resmi terkirim ke Admin!',
           });
         }
       } else {
@@ -322,7 +364,63 @@ export function useInspectionForm({
     } finally {
       setSubmitting(false);
     }
-  }, [recordId, isLocked, isAdmin, adminEditMode, status, formId, formType, formCode, effectiveRigNo, rigNo, effectivePeriod, effectiveMonth, effectiveYear, meta, items, extraPayload, user, authToken]);
+  }, [recordId, isLocked, isAdmin, adminEditMode, status, statusLaporan, formId, formType, formCode, effectiveRigNo, rigNo, effectivePeriod, effectiveMonth, effectiveYear, meta, items, extraPayload, user, authToken]);
+
+  // ─── 2.1. Review & Keputusan Persetujuan Administrator ───────────────────────
+  const handleReviewReport = useCallback(async (newStatus, note = '') => {
+    if (!recordId) {
+      setMessage({ type: 'error', text: 'Data laporan belum tersimpan di database untuk direview.' });
+      return false;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API_BASE_URL}/api/reports/${recordId}/review`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+        },
+        body: JSON.stringify({
+          status_laporan: newStatus,
+          catatan_admin: note
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal memperbarui status review laporan');
+      }
+
+      setStatusLaporan(newStatus);
+      setCatatanAdmin(note);
+
+      if (newStatus === 'Approved') {
+        setStatus('submitted');
+        setMessage({
+          type: 'success',
+          text: '✓ Dokumen laporan resmi Disetujui (Approved) oleh Administrator!',
+        });
+      } else if (newStatus === 'Revision') {
+        setStatus('draft');
+        setMessage({
+          type: 'warning',
+          text: `⚠️ Laporan berhasil dikembalikan ke Rig untuk direvisi dengan catatan: "${note}"`,
+        });
+      } else if (newStatus === 'Rejected') {
+        setMessage({
+          type: 'error',
+          text: '✗ Laporan telah Ditolak (Rejected) oleh Administrator.',
+        });
+      }
+      return true;
+    } catch (err) {
+      console.error('Review error:', err);
+      setMessage({ type: 'error', text: err.message || 'Gagal memproses review laporan' });
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [recordId, authToken]);
 
   // ─── 3. Auto-Save Aman (Interval 1 Menit & Pembersihan Memori) ───────────────
   useEffect(() => {
@@ -420,6 +518,10 @@ export function useInspectionForm({
   return {
     recordId,
     status,
+    statusLaporan,
+    setStatusLaporan,
+    catatanAdmin,
+    setCatatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -430,6 +532,7 @@ export function useInspectionForm({
     effectiveRigNo,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     handleExportPdf,
     handleExportExcel,
     buildExportPayload,

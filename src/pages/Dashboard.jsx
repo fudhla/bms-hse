@@ -416,19 +416,32 @@ export default function Dashboard({ onSelectForm }) {
                       
                       // Status: 'submitted', 'draft', atau default 'not_started' (Belum)
                       const fStatus = formRecord?.status || (formRecord?.is_filled ? 'submitted' : 'not_started');
+                      const statusLaporan = formRecord?.status_laporan || (fStatus === 'submitted' ? 'Submitted' : 'Draft');
                       const Icon = def.icon;
 
-                      const rowClass = fStatus === 'submitted'
-                        ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200'
+                      const rowClass = statusLaporan === 'Revision'
+                        ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
+                        : statusLaporan === 'Approved'
+                        ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
+                        : statusLaporan === 'Rejected'
+                        ? 'bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100/60 text-rose-900 dark:text-rose-200'
+                        : fStatus === 'submitted'
+                        ? 'bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100/60 text-blue-900 dark:text-blue-200'
                         : fStatus === 'draft'
-                          ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200'
-                          : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
+                        ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-900 dark:text-amber-200'
+                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
 
-                      const iconClass = fStatus === 'submitted'
+                      const iconClass = statusLaporan === 'Revision'
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : statusLaporan === 'Approved'
                         ? 'text-emerald-600 dark:text-emerald-400'
+                        : statusLaporan === 'Rejected'
+                        ? 'text-rose-600 dark:text-rose-400'
+                        : fStatus === 'submitted'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : fStatus === 'draft'
-                          ? 'text-amber-500 dark:text-amber-400'
-                          : 'text-slate-400';
+                        ? 'text-amber-500 dark:text-amber-400'
+                        : 'text-slate-400';
 
                       return (
                         <div
@@ -440,7 +453,7 @@ export default function Dashboard({ onSelectForm }) {
                             year: selectedYear
                           })}
                           className={`flex items-center justify-between p-2 rounded-xl text-xs transition cursor-pointer ${rowClass}`}
-                          title={`Buka formulir ${def.title}`}
+                          title={`Buka formulir ${def.title} (${statusLaporan})`}
                         >
                           <div className="flex items-center space-x-2 truncate pr-2">
                             <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${iconClass}`} />
@@ -448,10 +461,25 @@ export default function Dashboard({ onSelectForm }) {
                           </div>
 
                           <div className="flex items-center space-x-1.5 flex-shrink-0">
-                            {fStatus === 'submitted' ? (
+                            {statusLaporan === 'Revision' ? (
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-black text-amber-800 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-300 animate-pulse">
+                                <AlertTriangle className="w-3 h-3 text-amber-700" />
+                                <span>Revisi</span>
+                              </span>
+                            ) : statusLaporan === 'Approved' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
-                                <span>{formRecord?.last_submitted ? String(formRecord.last_submitted).split('T')[0] : 'Terkirim'}</span>
+                                <span>Disetujui</span>
+                              </span>
+                            ) : statusLaporan === 'Rejected' ? (
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-100/60 dark:bg-rose-900/60 px-1.5 py-0.5 rounded">
+                                <XCircle className="w-3 h-3" />
+                                <span>Ditolak</span>
+                              </span>
+                            ) : fStatus === 'submitted' ? (
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/60 px-1.5 py-0.5 rounded">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>{formRecord?.last_submitted ? String(formRecord.last_submitted).split('T')[0] : 'Review'}</span>
                               </span>
                             ) : fStatus === 'draft' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">

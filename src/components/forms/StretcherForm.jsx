@@ -50,6 +50,8 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -58,6 +60,7 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload
   } = useInspectionForm({
     formId: 'stretcher',
@@ -159,6 +162,10 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
         adminEditMode={adminEditMode}
         onExportPdf={handleExportStretcherPdf}
         onExportExcel={handleExportStretcherExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -344,6 +351,9 @@ export default function StretcherForm({ onBack, currentUser, overrideRigNo = nul
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportStretcherPdf}
           onExportExcel={handleExportStretcherExcel}
           saveState={saveState}

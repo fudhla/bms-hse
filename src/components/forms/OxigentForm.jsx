@@ -55,6 +55,8 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -63,6 +65,7 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload
   } = useInspectionForm({
     formId: 'oxigent',
@@ -175,6 +178,10 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
         adminEditMode={adminEditMode}
         onExportPdf={handleExportOxigentPdf}
         onExportExcel={handleExportOxigentExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -512,6 +519,9 @@ export default function OxigentForm({ onBack, currentUser, overrideRigNo = null,
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportOxigentPdf}
           onExportExcel={handleExportOxigentExcel}
           saveState={saveState}

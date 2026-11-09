@@ -26,6 +26,7 @@ import { exportToPdf, exportToExcel, exportMonthlyRecapExcel, FORM_META_MAP, for
 import PeriodFilter from '../components/PeriodFilter';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AdminApprovalPanel from '../components/forms/AdminApprovalPanel';
 
 const RIG_LIST = Array.from({ length: 20 }, (_, i) => `BMS ${String(i + 1).padStart(2, '0')}`);
 
@@ -124,6 +125,44 @@ export default function AdminReportsPage() {
     return () => clearInterval(pollingInterval);
   }, []);
 
+  // Handle Review Report (Approve / Revision / Reject) oleh Admin
+  const handleReviewReport = async (inspectionId, newStatus, note) => {
+    try {
+      const res = await fetch(`/api/reports/${inspectionId}/review`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          status_laporan: newStatus,
+          catatan_admin: note
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memperbarui status laporan.');
+      
+      // Update data di state lokal
+      setInspections(prev => prev.map(item => item.id === inspectionId ? {
+        ...item,
+        status_laporan: newStatus,
+        catatan_admin: note,
+        status: newStatus === 'Revision' ? 'draft' : item.status
+      } : item));
+
+      if (selectedInspection && selectedInspection.id === inspectionId) {
+        setSelectedInspection(prev => ({
+          ...prev,
+          status_laporan: newStatus,
+          catatan_admin: note,
+          status: newStatus === 'Revision' ? 'draft' : prev.status
+        }));
+      }
+    } catch (err) {
+      alert('Gagal mereview laporan: ' + err.message);
+    }
+  };
+
   // Filter Data di sisi client
   const filteredData = useMemo(() => {
     return inspections.filter((item) => {
@@ -141,8 +180,14 @@ export default function AdminReportsPage() {
       }
 
       // Filter Status
-      if (selectedStatus !== 'all' && item.status !== selectedStatus) {
-        return false;
+      if (selectedStatus !== 'all') {
+        const itemStatusLaporan = item.status_laporan || (item.status === 'submitted' ? 'Submitted' : 'Draft');
+        if (selectedStatus === 'submitted' && item.status !== 'submitted') return false;
+        if (selectedStatus === 'draft' && item.status !== 'draft') return false;
+        if (selectedStatus === 'Approved' && itemStatusLaporan !== 'Approved') return false;
+        if (selectedStatus === 'Revision' && itemStatusLaporan !== 'Revision') return false;
+        if (selectedStatus === 'Rejected' && itemStatusLaporan !== 'Rejected') return false;
+        if (selectedStatus === 'Submitted' && itemStatusLaporan !== 'Submitted') return false;
       }
 
       // Filter Tanggal / Bulan / Tahun
@@ -372,7 +417,10 @@ export default function AdminReportsPage() {
               className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Semua Status</option>
-              <option value="submitted">Submitted (Sah)</option>
+              <option value="Approved">✓ Disetujui (Approved)</option>
+              <option value="Submitted">⏳ Menunggu Review (Submitted)</option>
+              <option value="Revision">⚠️ Perlu Revisi (Revision)</option>
+              <option value="Rejected">✕ Ditolak (Rejected)</option>
               <option value="draft">Draft (Berjalan)</option>
             </select>
 
@@ -499,11 +547,26 @@ export default function AdminReportsPage() {
                         </div>
                       </td>
 
-                      {/* Status */}
+                      {/* Status Laporan Workflow */}
                       <td className="py-3 px-3.5">
-                        {isSubmitted ? (
+                        {item.status_laporan === 'Approved' ? (
                           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Approved</span>
+                          </span>
+                        ) : item.status_laporan === 'Revision' ? (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
+                            <AlertTriangle className="w-3 h-3 text-amber-600" />
+                            <span>Revision</span>
+                          </span>
+                        ) : item.status_laporan === 'Rejected' ? (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                            <X className="w-3 h-3 text-rose-600" />
+                            <span>Rejected</span>
+                          </span>
+                        ) : isSubmitted ? (
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-cyan-300 border border-blue-300 dark:border-blue-800">
+                            <CheckCircle2 className="w-3 h-3 text-blue-600" />
                             <span>Submitted</span>
                           </span>
                         ) : (
@@ -640,6 +703,14 @@ export default function AdminReportsPage() {
 
             {/* Body Dokumen Pratinjau */}
             <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              {/* Panel Keputusan Administrator */}
+              <AdminApprovalPanel
+                statusLaporan={selectedInspection.status_laporan || (selectedInspection.status === 'submitted' ? 'Submitted' : 'Draft')}
+                catatanAdmin={selectedInspection.catatan_admin || ''}
+                onReview={(newStatus, note) => handleReviewReport(selectedInspection.id, newStatus, note)}
+                submitting={false}
+              />
+
               {/* Box KOP Resmi */}
               <div className="border-2 border-slate-800 dark:border-slate-700 rounded-lg overflow-hidden bg-white text-slate-900">
                 <div className="grid grid-cols-12 divide-x-2 divide-slate-800">

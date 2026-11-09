@@ -189,6 +189,7 @@ function matchForm(formType) {
         form_type VARCHAR(100) NOT NULL,
         form_code VARCHAR(100) NULL,
         rig_no VARCHAR(100) NULL,
+        period VARCHAR(20) NULL,
         tanggal VARCHAR(50) NULL,
         lokasi VARCHAR(255) NULL,
         status_rig VARCHAR(100) NULL,
@@ -196,6 +197,8 @@ function matchForm(formType) {
         hfo_name VARCHAR(150) NULL,
         tool_pusher_name VARCHAR(150) NULL,
         status ENUM('draft', 'submitted') NOT NULL DEFAULT 'draft',
+        status_laporan ENUM('Draft', 'Submitted', 'Approved', 'Revision', 'Rejected') NOT NULL DEFAULT 'Draft',
+        catatan_admin TEXT NULL,
         form_data JSON NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -228,8 +231,25 @@ function matchForm(formType) {
         SET period = DATE_FORMAT(tanggal, '%Y-%m') 
         WHERE (period IS NULL OR period = '') AND tanggal REGEXP '^[0-9]{4}-[0-9]{2}'
       `);
+
+      // Pastikan kolom status_laporan dan catatan_admin ada untuk Approval Workflow (Alur Persetujuan & Revisi)
+      const [colStatusLaporan] = await connection.query(`SHOW COLUMNS FROM inspections LIKE 'status_laporan'`);
+      if (colStatusLaporan.length === 0) {
+        await connection.query(`ALTER TABLE inspections ADD COLUMN status_laporan ENUM('Draft', 'Submitted', 'Approved', 'Revision', 'Rejected') NOT NULL DEFAULT 'Draft' AFTER status`);
+      }
+      const [colCatatanAdmin] = await connection.query(`SHOW COLUMNS FROM inspections LIKE 'catatan_admin'`);
+      if (colCatatanAdmin.length === 0) {
+        await connection.query(`ALTER TABLE inspections ADD COLUMN catatan_admin TEXT NULL AFTER status_laporan`);
+      }
+
+      // Migrasi data lama: jika status 'submitted' dan status_laporan masih 'Draft', sinkronkan jadi 'Submitted'
+      await connection.query(`
+        UPDATE inspections 
+        SET status_laporan = 'Submitted' 
+        WHERE status = 'submitted' AND (status_laporan IS NULL OR status_laporan = 'Draft')
+      `);
     } catch (colErr) {
-      console.log('Pemeriksaan kolom status & period:', colErr.message);
+      console.log('Pemeriksaan kolom status, period, status_laporan & catatan_admin:', colErr.message);
     }
 
     // 4. Buat tabel harness_inspections & harness_items
@@ -1251,7 +1271,7 @@ app.get('/api/inspections/overview', async (req, res) => {
 
     const monthPattern = `${periodStr}%`;
     const [rows] = await pool.query(`
-      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
+      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, status_laporan, catatan_admin, created_at, updated_at
       FROM inspections
       WHERE period = ? 
          OR tanggal LIKE ? 
@@ -1301,8 +1321,12 @@ app.get('/api/inspections/overview', async (req, res) => {
         }
         
         let status = 'not_started';
+        let statusLaporan = 'Draft';
+        let catatanAdmin = null;
         if (match) {
           status = match.status === 'draft' ? 'draft' : 'submitted';
+          statusLaporan = match.status_laporan || (match.status === 'submitted' ? 'Submitted' : 'Draft');
+          catatanAdmin = match.catatan_admin || null;
         }
 
         return {
@@ -1311,6 +1335,8 @@ app.get('/api/inspections/overview', async (req, res) => {
           doc_no: fDef.docNo,
           icon: fDef.icon,
           status: status,
+          status_laporan: statusLaporan,
+          catatan_admin: catatanAdmin,
           is_filled: status === 'submitted',
           is_draft: status === 'draft',
           last_submitted: match ? (match.updated_at || match.tanggal || match.created_at) : null,
@@ -1399,7 +1425,7 @@ app.get('/api/inspections/overview/:rig_name', async (req, res) => {
     const monthPattern = `${periodStr}%`;
 
     const [rows] = await pool.query(`
-      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, created_at, updated_at
+      SELECT id, form_type, form_code, rig_no, period, tanggal, lokasi, status_rig, rekomendasi, hfo_name, tool_pusher_name, status, status_laporan, catatan_admin, created_at, updated_at
       FROM inspections
       WHERE period = ?
          OR tanggal LIKE ?
@@ -1431,8 +1457,12 @@ app.get('/api/inspections/overview/:rig_name', async (req, res) => {
       }
       
       let status = 'not_started';
+      let statusLaporan = 'Draft';
+      let catatanAdmin = null;
       if (match) {
         status = match.status === 'draft' ? 'draft' : 'submitted';
+        statusLaporan = match.status_laporan || (match.status === 'submitted' ? 'Submitted' : 'Draft');
+        catatanAdmin = match.catatan_admin || null;
       }
 
       return {
@@ -1441,6 +1471,8 @@ app.get('/api/inspections/overview/:rig_name', async (req, res) => {
         doc_no: fDef.docNo,
         icon: fDef.icon,
         status: status,
+        status_laporan: statusLaporan,
+        catatan_admin: catatanAdmin,
         is_filled: status === 'submitted',
         is_draft: status === 'draft',
         last_submitted: match ? (match.updated_at || match.tanggal || match.created_at) : null,
@@ -2475,19 +2507,40 @@ app.post('/api/inspections', async (req, res) => {
         ? (authenticatedUser.role === 'admin' || authenticatedUser.username === 'admin_besmindo') 
         : (payload.user_role === 'admin' || payload.role === 'admin' || payload.is_admin === true);
 
-      const [check] = await pool.query('SELECT status FROM inspections WHERE id = ?', [existingId]);
+      const [check] = await pool.query('SELECT status, status_laporan, catatan_admin FROM inspections WHERE id = ?', [existingId]);
       
-      if (check.length > 0 && check[0].status === 'submitted' && !isAdminUser) {
+      const currentStatusLaporan = check.length > 0 ? (check[0].status_laporan || 'Draft') : 'Draft';
+      const isRevisionMode = currentStatusLaporan === 'Revision';
+
+      // Cegah edit jika sudah disubmit/approved KECUALI sedang dalam mode Revisi atau user adalah Admin
+      if (check.length > 0 && check[0].status === 'submitted' && !isAdminUser && !isRevisionMode && currentStatusLaporan !== 'Draft') {
         return res.json({
           success: true,
           message: 'Inspeksi telah disubmit final dan terkunci untuk User (Read-Only)',
           id: existingId,
           status: 'submitted',
+          status_laporan: currentStatusLaporan,
           locked: true
         });
       }
 
-      const finalStatusToSave = (check.length > 0 && check[0].status === 'submitted') ? 'submitted' : status;
+      let finalStatusLaporan = currentStatusLaporan;
+      let finalCatatanAdmin = check.length > 0 ? check[0].catatan_admin : null;
+
+      if (status === 'submitted') {
+        // User submit final atau kirim ulang setelah revisi
+        finalStatusLaporan = 'Submitted';
+        finalCatatanAdmin = null; // Reset/kosongkan catatan revisi setelah dikirim ulang oleh rig
+      } else if (isRevisionMode) {
+        // User sedang mengedit selama periode revisi, status laporan tetap 'Revision'
+        finalStatusLaporan = 'Revision';
+      } else if (payload.status_laporan) {
+        finalStatusLaporan = payload.status_laporan;
+      }
+
+      const finalStatusToSave = (status === 'submitted' || (!isRevisionMode && check.length > 0 && check[0].status === 'submitted')) 
+        ? 'submitted' 
+        : 'draft';
 
       const updateQuery = `
         UPDATE inspections SET
@@ -2501,6 +2554,8 @@ app.post('/api/inspections', async (req, res) => {
           hfo_name = ?,
           tool_pusher_name = ?,
           status = ?,
+          status_laporan = ?,
+          catatan_admin = ?,
           form_data = ?
         WHERE id = ?
       `;
@@ -2516,6 +2571,8 @@ app.post('/api/inspections', async (req, res) => {
         hfo_name,
         tool_pusher_name,
         finalStatusToSave,
+        finalStatusLaporan,
+        finalCatatanAdmin,
         formDataJson,
         existingId
       ]);
@@ -2537,12 +2594,12 @@ app.post('/api/inspections', async (req, res) => {
                 remark = ?,
                 status = ?
               WHERE id = ?
-            `, [existingId, hfo_name, tool_pusher_name, payload.wsr_name || null, rekomendasi, status, hId]);
+            `, [existingId, hfo_name, tool_pusher_name, payload.wsr_name || null, rekomendasi, finalStatusToSave, hId]);
           } else {
             const [hInsert] = await pool.query(`
               INSERT INTO harness_inspections (inspection_id, rig_no, tanggal, derrickman_name, tool_pusher_name, wsr_name, remark, status)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, [existingId, rig_no, tanggal, hfo_name, tool_pusher_name, payload.wsr_name || null, rekomendasi, status]);
+            `, [existingId, rig_no, tanggal, hfo_name, tool_pusher_name, payload.wsr_name || null, rekomendasi, finalStatusToSave]);
             hId = hInsert.insertId;
           }
 
@@ -2578,19 +2635,23 @@ app.post('/api/inspections', async (req, res) => {
       return res.json({
         success: true,
         message: status === 'submitted' 
-          ? 'Inspeksi berhasil disimpan final dan resmi terkirim!' 
+          ? (isRevisionMode ? 'Laporan berhasil diperbaiki dan resmi dikirim ulang ke Admin!' : 'Inspeksi berhasil disimpan final dan resmi terkirim!') 
           : 'Perubahan otomatis tersimpan sebagai draft.',
         id: existingId,
-        status: status,
+        status: finalStatusToSave,
+        status_laporan: finalStatusLaporan,
+        catatan_admin: finalCatatanAdmin,
         locked: status === 'submitted'
       });
     }
 
+    const insertStatusLaporan = status === 'submitted' ? 'Submitted' : 'Draft';
     const insertQuery = `
       INSERT INTO inspections (
         form_type,
         form_code,
         rig_no,
+        period,
         tanggal,
         lokasi,
         status_rig,
@@ -2598,14 +2659,17 @@ app.post('/api/inspections', async (req, res) => {
         hfo_name,
         tool_pusher_name,
         status,
+        status_laporan,
+        catatan_admin,
         form_data
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       form_type,
       form_code,
       rig_no,
+      payload.period || (tanggal && String(tanggal).length >= 7 ? String(tanggal).slice(0, 7) : null),
       tanggal,
       lokasi,
       status_rig,
@@ -2613,6 +2677,8 @@ app.post('/api/inspections', async (req, res) => {
       hfo_name,
       tool_pusher_name,
       status,
+      insertStatusLaporan,
+      null,
       formDataJson
     ];
 
@@ -2652,6 +2718,8 @@ app.post('/api/inspections', async (req, res) => {
         : 'Draft inspeksi berhasil dibuat dan tersimpan otomatis.',
       id: newInspectionId,
       status: status,
+      status_laporan: insertStatusLaporan,
+      catatan_admin: null,
       locked: status === 'submitted'
     });
   } catch (err) {
@@ -2710,6 +2778,82 @@ app.delete('/api/inspections/:id', requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: 'Gagal menghapus inspeksi: ' + err.message });
   }
 });
+
+// ── APPROVAL WORKFLOW: REVIEW & PERSETUJUAN LAPORAN (ADMIN) ────────
+const handleReportReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status_laporan, catatan_admin } = req.body || {};
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID laporan wajib disertakan' });
+    }
+
+    // Normalisasi status review (case-insensitive)
+    const validMap = {
+      'approved': 'Approved',
+      'revision': 'Revision',
+      'rejected': 'Rejected',
+      'submitted': 'Submitted',
+      'draft': 'Draft'
+    };
+    const normKey = (status_laporan || '').toLowerCase().trim();
+    const finalStatus = validMap[normKey];
+
+    if (!finalStatus) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Status laporan tidak valid. Pilihan: 'Approved', 'Revision', 'Rejected', 'Submitted', 'Draft'" 
+      });
+    }
+
+    if (finalStatus === 'Revision' && (!catatan_admin || !String(catatan_admin).trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Catatan perbaikan wajib diisi oleh Admin saat mengembalikan (revisi) laporan!'
+      });
+    }
+
+    const [check] = await pool.query('SELECT * FROM inspections WHERE id = ?', [id]);
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, message: 'Data inspeksi tidak ditemukan' });
+    }
+
+    const cleanNote = catatan_admin ? String(catatan_admin).trim() : null;
+    
+    // Status sinkron: Jika 'Revision', status utama diubah jadi 'draft' agar user rig dapat mengedit kembali
+    const syncStatus = (finalStatus === 'Revision') ? 'draft' : (finalStatus === 'Approved' ? 'submitted' : check[0].status);
+
+    await pool.query(`
+      UPDATE inspections SET
+        status = ?,
+        status_laporan = ?,
+        catatan_admin = ?,
+        updated_at = NOW()
+      WHERE id = ?
+    `, [syncStatus, finalStatus, cleanNote, id]);
+
+    return res.json({
+      success: true,
+      message: `Laporan berhasil diperbarui dengan status: ${finalStatus}`,
+      data: {
+        id: Number(id),
+        status: syncStatus,
+        status_laporan: finalStatus,
+        catatan_admin: cleanNote
+      }
+    });
+  } catch (err) {
+    console.error('Error saat review laporan:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal memperbarui status review laporan: ' + err.message
+    });
+  }
+};
+
+app.put('/api/reports/:id/review', handleReportReview);
+app.put('/api/inspections/:id/review', handleReportReview);
 
 // ── 9. ENDPOINT ITEM & FOTO HARNESS TERSTRUKTUR ──────────────────
 app.get('/api/harness-items/:rigNo/:month/:year', async (req, res) => {

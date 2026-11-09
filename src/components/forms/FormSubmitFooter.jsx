@@ -35,6 +35,8 @@ export default function FormSubmitFooter({
   isAdmin = false,
   adminEditMode = false,
   status = 'draft',
+  statusLaporan = 'Draft',
+  catatanAdmin = '',
   onExportPdf,
   onExportExcel,
   saveState
@@ -228,8 +230,14 @@ export default function FormSubmitFooter({
         setToast({
           show: true,
           type: 'success',
-          title: 'Inspeksi Berhasil Disetujui & Disimpan!',
-          message: 'Dokumen telah dikunci secara sah & tercatat ke Admin HSE.'
+          title: statusLaporan === 'Revision' 
+            ? 'Laporan Revisi Berhasil Dikirim Ulang!'
+            : isAdmin && status === 'submitted'
+            ? 'Pembaruan Data Berhasil Disimpan!'
+            : 'Inspeksi Berhasil Disetujui & Disimpan!',
+          message: statusLaporan === 'Revision'
+            ? 'Laporan telah dikirim kembali ke Admin HSE untuk persetujuan.'
+            : 'Dokumen telah dikunci secara sah & tercatat ke Admin HSE.'
         });
       }, 950);
     } catch (err) {
@@ -386,18 +394,44 @@ export default function FormSubmitFooter({
             </div>
           </div>
         ) : isLocked ? (
-          /* KASUS 2: TERKUNCI / SUBMITTED UNTUK USER BIASA (RIG) */
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border border-emerald-300 shadow-xs">
+          /* KASUS 2: TERKUNCI / SUBMITTED / APPROVED / REJECTED UNTUK USER BIASA (RIG) */
+          <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border shadow-xs ${
+            statusLaporan === 'Approved'
+              ? 'bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border-emerald-300'
+              : statusLaporan === 'Rejected'
+              ? 'bg-gradient-to-r from-rose-50/90 to-rose-100/40 border-rose-300'
+              : 'bg-gradient-to-r from-blue-50/90 to-blue-100/40 border-blue-300'
+          }`}>
             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-emerald-600/30">
-                <CheckCircle className="w-5 h-5 text-white" />
+              <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm ${
+                statusLaporan === 'Approved'
+                  ? 'bg-emerald-600 shadow-emerald-600/30'
+                  : statusLaporan === 'Rejected'
+                  ? 'bg-rose-600 shadow-rose-600/30'
+                  : 'bg-blue-600 shadow-blue-600/30'
+              }`}>
+                {statusLaporan === 'Approved' ? (
+                  <CheckCircle className="w-5 h-5 text-white" />
+                ) : statusLaporan === 'Rejected' ? (
+                  <X className="w-5 h-5 text-white stroke-[2.5]" />
+                ) : (
+                  <Lock className="w-5 h-5 text-white" />
+                )}
               </div>
               <div className="min-w-0">
                 <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
-                  Formulir Inspeksi Telah Selesai &amp; Terkunci
+                  {statusLaporan === 'Approved'
+                    ? 'Formulir Inspeksi Telah Disetujui (Approved)'
+                    : statusLaporan === 'Rejected'
+                    ? 'Laporan Inspeksi Ditolak (Rejected)'
+                    : 'Formulir Inspeksi Telah Selesai & Terkunci'}
                 </h4>
                 <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                  Data telah resmi tersimpan di database (read-only). Anda dapat mengunduh laporan dalam format PDF atau Excel.
+                  {statusLaporan === 'Approved'
+                    ? 'Laporan telah resmi disetujui oleh Administrator HSE. Dokumen terkunci permanen.'
+                    : statusLaporan === 'Rejected'
+                    ? (catatanAdmin ? `Catatan Admin: ${catatanAdmin}` : 'Laporan ini ditolak oleh Administrator HSE.')
+                    : 'Data telah resmi tersimpan di database (read-only) & menunggu verifikasi Admin HSE.'}
                 </p>
               </div>
             </div>
@@ -438,12 +472,18 @@ export default function FormSubmitFooter({
             </div>
           </div>
         ) : (
-          /* KASUS 3: DRAFT / SEDANG DIISI */
+          /* KASUS 3: DRAFT / REVISI SEDANG DIISI */
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Auto-save indicator */}
             <div className="text-xs text-slate-600 font-medium flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
-              <span>Inputan otomatis tersimpan sebagai draft. Tekan <strong>Kunci &amp; Submit Final</strong> untuk mengunci dokumen secara sah.</span>
+              <span className={`w-2 h-2 rounded-full ${statusLaporan === 'Revision' ? 'bg-amber-500' : 'bg-amber-500'} animate-pulse flex-shrink-0`}></span>
+              <span>
+                {statusLaporan === 'Revision' ? (
+                  <>Perbaikan data formulir siap. Klik <strong>Kirim Ulang Laporan</strong> untuk mengirim kembali ke Admin.</>
+                ) : (
+                  <>Inputan otomatis tersimpan sebagai draft. Tekan <strong>Kunci &amp; Submit Final</strong> untuk mengunci dokumen secara sah.</>
+                )}
+              </span>
             </div>
 
             <div className="flex items-center gap-2.5 flex-shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
@@ -484,12 +524,22 @@ export default function FormSubmitFooter({
                 type="button"
                 onClick={handleOpenConfirmModal}
                 disabled={submitting}
-                className="group relative inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-50 overflow-hidden whitespace-nowrap flex-shrink-0"
+                className={`group relative inline-flex items-center gap-2 px-5 py-2 rounded-xl text-white font-bold text-xs shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-50 overflow-hidden whitespace-nowrap flex-shrink-0 ${
+                  statusLaporan === 'Revision'
+                    ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                    : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                }`}
               >
                 {/* Micro shimmer highlight on button */}
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-                <Lock className="w-4 h-4 text-white" />
-                <span className="text-white">Kunci &amp; Submit Final</span>
+                {statusLaporan === 'Revision' ? (
+                  submitting ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <RefreshCw className="w-4 h-4 text-white" />
+                ) : (
+                  <Lock className="w-4 h-4 text-white" />
+                )}
+                <span className="text-white">
+                  {statusLaporan === 'Revision' ? 'Kirim Ulang Laporan' : 'Kunci & Submit Final'}
+                </span>
               </button>
             </div>
           </div>
@@ -517,7 +567,11 @@ export default function FormSubmitFooter({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm text-slate-900">
-                    {isAdmin && status === 'submitted' ? 'Simpan Pembaruan Data Admin' : 'Persetujuan Dokumen Inspeksi'}
+                    {statusLaporan === 'Revision'
+                      ? 'Kirim Ulang Laporan Revisi'
+                      : isAdmin && status === 'submitted'
+                      ? 'Simpan Pembaruan Data Admin'
+                      : 'Persetujuan Dokumen Inspeksi'}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium">
                     PT. Besmindo Materi Sewatama &bull; QHSE
@@ -540,12 +594,16 @@ export default function FormSubmitFooter({
             <div className="p-6 space-y-4 text-xs">
               <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950 space-y-1">
                 <p className="font-extrabold text-xs">
-                  {isAdmin && status === 'submitted'
+                  {statusLaporan === 'Revision'
+                    ? 'Perhatian Pengiriman Revisi:'
+                    : isAdmin && status === 'submitted'
                     ? 'Perhatian Pembaruan Administrator:'
                     : 'Pernyataan Keabsahan Pemeriksaan:'}
                 </p>
                 <p className="text-[11px] leading-relaxed text-blue-900">
-                  {isAdmin && status === 'submitted'
+                  {statusLaporan === 'Revision'
+                    ? 'Dengan mengirim ulang, laporan ini akan kembali berstatus Submitted dan menunggu peninjauan/persetujuan dari Administrator HSE.'
+                    : isAdmin && status === 'submitted'
                     ? 'Seluruh revisi pada checklist fisik dan catatan inspeksi akan langsung diperbarui ke database pusat.'
                     : 'Dengan menyetujui, formulir ini akan resmi terkunci (Submitted / Read-Only), tervalidasi dengan tanda tangan digital, dan tidak dapat diubah kembali oleh personil Rig.'}
                 </p>
@@ -600,7 +658,11 @@ export default function FormSubmitFooter({
                       {/* Animated Label */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-500 font-bold text-[11px] tracking-wide">
                         <span className="flex items-center space-x-1">
-                          <span>Geser ke kanan untuk menyetujui</span>
+                          <span>
+                            {statusLaporan === 'Revision'
+                              ? 'Geser ke kanan untuk kirim ulang'
+                              : 'Geser ke kanan untuk menyetujui'}
+                          </span>
                           <span className="text-emerald-600 font-black animate-pulse">❯❯❯</span>
                         </span>
                       </div>
@@ -628,10 +690,22 @@ export default function FormSubmitFooter({
                   <button
                     type="button"
                     onClick={executeApproval}
-                    className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition shadow-md hover:shadow-blue-500/30 flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+                    className={`w-full py-3 rounded-2xl text-white font-extrabold text-xs transition shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 ${
+                      statusLaporan === 'Revision'
+                        ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/30'
+                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
+                    }`}
                   >
-                    <Check className="w-4 h-4 stroke-[2.5] text-white" />
-                    <span className="text-white">Setujui &amp; Kunci Laporan Sekarang</span>
+                    {statusLaporan === 'Revision' ? (
+                      <RefreshCw className="w-4 h-4 text-white" />
+                    ) : (
+                      <Check className="w-4 h-4 stroke-[2.5] text-white" />
+                    )}
+                    <span className="text-white">
+                      {statusLaporan === 'Revision'
+                        ? 'Kirim Ulang Laporan Sekarang'
+                        : 'Setujui & Kunci Laporan Sekarang'}
+                    </span>
                   </button>
                 </div>
               )}
@@ -697,13 +771,17 @@ export default function FormSubmitFooter({
 
             {/* Title & Feedback */}
             <h3 className="text-lg font-black text-slate-900 tracking-tight mt-3">
-              {isAdmin && status === 'submitted'
+              {statusLaporan === 'Revision'
+                ? 'Laporan Revisi Berhasil Dikirim Ulang!'
+                : isAdmin && status === 'submitted'
                 ? 'Pembaruan Data Berhasil Disimpan!'
                 : 'Inspeksi Berhasil Disetujui & Disimpan!'}
             </h3>
 
             <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-              Dokumen telah resmi disahkan ke dalam sistem HSE PT. Besmindo Materi Sewatama. Formulir kini berstatus <strong>Terkunci (Submitted)</strong> dan aman di database.
+              {statusLaporan === 'Revision'
+                ? 'Laporan perbaikan Anda telah berhasil dikirimkan kembali ke Admin HSE untuk verifikasi persetujuan.'
+                : 'Dokumen telah resmi disahkan ke dalam sistem HSE PT. Besmindo Materi Sewatama. Formulir kini berstatus Terkunci (Submitted) dan aman di database.'}
             </p>
 
             {/* Status Pills */}

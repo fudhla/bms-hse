@@ -86,6 +86,8 @@ function EyewashTabPanel({
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -94,6 +96,7 @@ function EyewashTabPanel({
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload,
     initialData,
     initialLoaded
@@ -230,6 +233,10 @@ function EyewashTabPanel({
         adminEditMode={adminEditMode}
         onExportPdf={handleExportEyewashPdf}
         onExportExcel={handleExportEyewashExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -719,6 +726,9 @@ function EyewashTabPanel({
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportEyewashPdf}
           onExportExcel={handleExportEyewashExcel}
           saveState={saveState}

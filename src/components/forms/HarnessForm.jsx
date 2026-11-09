@@ -184,6 +184,8 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -192,6 +194,7 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload,
     initialData,
     initialLoaded
@@ -407,6 +410,10 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
         onBack={onBack}
         onExportPdf={handleExportHarnessPdf}
         onExportExcel={handleExportHarnessExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status Banner */}
@@ -817,6 +824,8 @@ export default function HarnessForm({ onBack, currentUser, overrideRigNo = null,
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
           status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportHarnessPdf}
           onExportExcel={handleExportHarnessExcel}
           saveState={saveState}

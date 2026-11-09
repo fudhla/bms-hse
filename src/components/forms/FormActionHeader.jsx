@@ -4,6 +4,7 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle, 
+  AlertTriangle,
   RefreshCw, 
   Lock, 
   ShieldCheck, 
@@ -14,6 +15,7 @@ import {
   Camera, 
   Info 
 } from 'lucide-react';
+import AdminApprovalPanel from './AdminApprovalPanel';
 
 // Panduan Khusus per Form
 const FORM_GUIDES = {
@@ -121,7 +123,11 @@ export default function FormActionHeader({
   adminEditMode = false,
   onExportPdf,
   onExportExcel,
-  title
+  title,
+  statusLaporan = 'Draft',
+  catatanAdmin = '',
+  onReviewReport,
+  submitting = false
 }) {
   const [showGuideModal, setShowGuideModal] = useState(false);
 
@@ -135,6 +141,46 @@ export default function FormActionHeader({
 
   return (
     <>
+      {/* ── BANNER PERINGATAN REVISI DARI ADMIN (JIKA STATUS = REVISION) ── */}
+      {statusLaporan === 'Revision' && (
+        <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 text-amber-950 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500 text-white flex-shrink-0 shadow-xs animate-pulse">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="font-extrabold text-xs sm:text-sm text-amber-950 tracking-wide uppercase">
+                  Perlu Revisi dari Rig
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                  Catatan Administrator HSE
+                </span>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-800 whitespace-pre-wrap font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-amber-200 shadow-2xs mt-1.5">
+                {catatanAdmin || 'Mohon periksa kembali data checklist formulir ini dan lengkapi bagian yang belum sesuai.'}
+              </div>
+              <p className="text-[11px] text-amber-900 mt-2 font-semibold flex items-center gap-1.5">
+                <span>ℹ️</span>
+                Formulir telah dibuka kembali untuk diedit. Setelah selesai memperbaiki, silakan klik tombol <strong>"Kirim Ulang Laporan"</strong> di bagian bawah halaman.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PANEL KEPUTUSAN ADMINISTRATOR (JIKA ADMIN & CALLBACK REVIEW TERSEDIA) ── */}
+      {isAdmin && onReviewReport && (status === 'submitted' || statusLaporan !== 'Draft') && (
+        <div className="mb-4">
+          <AdminApprovalPanel
+            statusLaporan={statusLaporan}
+            catatanAdmin={catatanAdmin}
+            onReview={onReviewReport}
+            submitting={submitting}
+          />
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 mb-4 border-b border-slate-300">
         {/* Tombol Kembali & Status Draft/Submitted/Admin Edit */}
         <div className="flex items-center flex-wrap gap-2.5">
@@ -159,32 +205,54 @@ export default function FormActionHeader({
             <span>Panduan Form</span>
           </button>
 
-          {/* ── Indikator Status Role-Based ── */}
-          {status === 'submitted' && isAdmin ? (
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300 shadow-xs">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                <span>✓ Terkirim untuk User &bull; Mode Edit Admin Aktif</span>
-              </span>
+          {/* ── Indikator Status Approval Workflow ── */}
+          {statusLaporan === 'Approved' ? (
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+              <span>✓ Disetujui Admin (Approved)</span>
+            </span>
+          ) : statusLaporan === 'Rejected' ? (
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 shadow-xs">
+              <X className="w-3.5 h-3.5 text-rose-700" />
+              <span>✕ Ditolak Admin (Rejected)</span>
+            </span>
+          ) : statusLaporan === 'Revision' ? (
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs animate-pulse">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+              <span>⚠️ Perlu Revisi (Revision)</span>
+            </span>
+          ) : status === 'submitted' || statusLaporan === 'Submitted' ? (
+            isAdmin ? (
+              <div className="flex items-center space-x-2">
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+                  <span>Terkirim &bull; Menunggu Review Admin</span>
+                </span>
 
-              {/* Indikator Auto-Save Realtime saat Admin Mengedit */}
-              {saveState === 'saving' && (
-                <span className="flex items-center space-x-1 text-[11px] text-blue-700 font-semibold">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>Menyimpan pembaruan...</span>
-                </span>
-              )}
-              {saveState === 'saved' && (
-                <span className="flex items-center space-x-1 text-[11px] text-emerald-700 font-semibold">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>Pembaruan tersimpan</span>
-                </span>
-              )}
-            </div>
+                {/* Indikator Auto-Save Realtime saat Admin Mengedit */}
+                {saveState === 'saving' && (
+                  <span className="flex items-center space-x-1 text-[11px] text-blue-700 font-semibold">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Menyimpan pembaruan...</span>
+                  </span>
+                )}
+                {saveState === 'saved' && (
+                  <span className="flex items-center space-x-1 text-[11px] text-emerald-700 font-semibold">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Pembaruan tersimpan</span>
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300">
+                <Lock className="w-3 h-3 text-blue-700" />
+                <span>✓ Terkirim &amp; Menunggu Persetujuan Admin</span>
+              </span>
+            )
           ) : isLocked ? (
             <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
               <Lock className="w-3 h-3 text-emerald-700" />
-              <span>✓ Terkirim &amp; Terkunci (Submitted)</span>
+              <span>✓ Terkirim &amp; Terkunci</span>
             </span>
           ) : (
             <div className="flex items-center space-x-2">

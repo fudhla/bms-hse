@@ -69,6 +69,8 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -77,6 +79,7 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     handleExportPdf,
     handleExportExcel
   } = useInspectionForm({
@@ -223,6 +226,10 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
         adminEditMode={adminEditMode}
         onExportPdf={handleExportApdPdf}
         onExportExcel={handleExportApdExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -526,6 +533,9 @@ export default function ApdForm({ onBack, currentUser, overrideRigNo = null, vie
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportApdPdf}
           onExportExcel={handleExportApdExcel}
           saveState={saveState}

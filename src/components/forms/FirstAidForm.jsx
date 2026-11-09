@@ -62,6 +62,8 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
 
   const {
     status,
+    statusLaporan,
+    catatanAdmin,
     isLocked,
     isAdmin,
     adminEditMode,
@@ -70,6 +72,7 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
     message,
     validateBeforeSubmit,
     handleFinalSubmit,
+    handleReviewReport,
     buildExportPayload
   } = useInspectionForm({
     formId: 'firstaid',
@@ -168,6 +171,10 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
         adminEditMode={adminEditMode}
         onExportPdf={handleExportFirstAidPdf}
         onExportExcel={handleExportFirstAidExcel}
+        statusLaporan={statusLaporan}
+        catatanAdmin={catatanAdmin}
+        onReviewReport={handleReviewReport}
+        submitting={submitting}
       />
 
       {/* Alert Status */}
@@ -375,6 +382,9 @@ export default function FirstAidForm({ onBack, currentUser, overrideRigNo = null
           isLocked={isLocked}
           isAdmin={isAdmin}
           adminEditMode={adminEditMode}
+          status={status}
+          statusLaporan={statusLaporan}
+          catatanAdmin={catatanAdmin}
           onExportPdf={handleExportFirstAidPdf}
           onExportExcel={handleExportFirstAidExcel}
           saveState={saveState}
