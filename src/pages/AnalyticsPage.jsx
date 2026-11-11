@@ -206,77 +206,9 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── ROW 3 KOLOM: PIE CHART (KIRI), TOP 3 HFO (TENGAH), BAR CHART (KANAN) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ── KARTU 1: PIE CHART (Persentase Total Inspeksi - Kiri) ── */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                  <PieIcon className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    Persentase Total Inspeksi
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Selesai vs Belum Selesai ({periodLabel})
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-1 rounded-md">
-                {percentageCompleted}% Tercapai
-              </span>
-            </div>
-
-            {/* Area Visualisasi Pie Chart */}
-            <div className="h-60 sm:h-64 w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={completionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {completionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0f172a',
-                      borderColor: '#334155',
-                      borderRadius: '0.75rem',
-                      color: '#f8fafc',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}
-                    formatter={(value, name) => [`${value} Formulir (${totalFormulir > 0 ? Math.round((value / totalFormulir) * 100) : 0}%)`, name]}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 mt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Total Wajib: {totalFormulir} Form</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">
-              Sisa {sisaFormulir} Form
-            </span>
-          </div>
-        </div>
-
-        {/* ── KARTU 2: TOP 3 HFO PERFORMERS (Tengah) ── */}
+      {/* ── BARIS ATAS: GRID 3 KOLOM (METRIK DEFEK & INTELIJEN K3) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ── 1. KOLOM KIRI: TOP 3 HFO TERAKTIF ── */}
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -384,7 +316,96 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── KARTU 3: TOP 3 BARANG SERING RUSAK (Klasemen & Evaluasi Kualitas K3) ── */}
+        {/* ── 2. KOLOM TENGAH: TOP 5 RIG TEMUAN RUSAK (BAR CHART) ── */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Top 5 Rig Temuan Rusak
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Komponen rusak / servis ({periodLabel})
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950 px-2 py-1 rounded-md">
+                Prioritas
+              </span>
+            </div>
+
+            {/* Area Visualisasi Bar Chart */}
+            <div className="h-60 sm:h-64 w-full mt-4">
+              {topDefectRigs.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={topDefectRigs}
+                    margin={{ top: 15, right: 8, left: -26, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                    <XAxis
+                      dataKey="rig"
+                      tick={{ fontSize: 9, fill: '#64748b', fontWeight: 'bold' }}
+                      axisLine={{ stroke: '#cbd5e1' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fontSize: 9, fill: '#64748b' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '0.75rem',
+                        color: '#f8fafc',
+                        fontSize: '11px',
+                        fontWeight: '600'
+                      }}
+                      formatter={(value, name, item) => [
+                        `${value} Temuan (${item?.payload?.kategori || 'Komponen'})`,
+                        'Defek'
+                      ]}
+                      labelFormatter={(label) => `Rig: ${label}`}
+                    />
+                    <Bar
+                      dataKey="temuanRusak"
+                      name="Temuan Alat Rusak"
+                      fill="#F43F5E"
+                      radius={[4, 4, 0, 0]}
+                      barSize={20}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-4">
+                  <ShieldCheck className="w-10 h-10 text-emerald-500 mb-2" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Nihil Temuan Alat Rusak</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Semua peralatan dalam kondisi prima pada periode ini.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 mt-2 flex items-center justify-between text-xs">
+            <span className="text-rose-700 dark:text-rose-300 font-medium truncate">
+              {topDefectRigs.length > 0 
+                ? `Tertinggi: ${topDefectRigs[0].rig} (${topDefectRigs[0].temuanRusak} temuan)` 
+                : 'Kondisi Peralatan: Baik'}
+            </span>
+            <span className="text-[11px] text-rose-600 dark:text-rose-400 font-bold flex-shrink-0 ml-2">
+              {topDefectRigs.length > 0 ? 'Follow up' : 'Optimal'}
+            </span>
+          </div>
+        </div>
+
+        {/* ── 3. KOLOM KANAN: TOP 3 BARANG SERING RUSAK ── */}
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -439,48 +460,48 @@ export default function AnalyticsPage() {
                   return (
                     <div
                       key={`${item.itemName}-${index}`}
-                      className="py-2.5 px-2 -mx-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-xl space-y-1.5"
+                      className="py-2 px-2 -mx-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-xl space-y-1"
                     >
                       <div className="flex items-center justify-between">
                         {/* Sisi Kiri: Badge Rank & Nama Barang */}
-                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                          <div className={`w-8 h-8 rounded-full ${rankStyles.badge} font-black text-xs flex items-center justify-center flex-shrink-0 transition-transform duration-200`}>
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div className={`w-7 h-7 rounded-full ${rankStyles.badge} font-black text-xs flex items-center justify-center flex-shrink-0 transition-transform duration-200`}>
                             {rankStyles.isFirst ? (
-                              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 animate-pulse" />
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 animate-pulse" />
                             ) : (
                               `#${index + 1}`
                             )}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className={`text-sm truncate ${rankStyles.isFirst ? 'font-extrabold text-slate-900 dark:text-white' : 'font-bold text-slate-800 dark:text-slate-200'}`}>
+                              <p className={`text-xs sm:text-sm truncate ${rankStyles.isFirst ? 'font-extrabold text-slate-900 dark:text-white' : 'font-bold text-slate-800 dark:text-slate-200'}`}>
                                 {item.itemName}
                               </p>
                               {rankStyles.isFirst && (
                                 <span title="Paling Sering Rusak" className="inline-flex items-center text-rose-500">
-                                  <AlertTriangle className="w-3.5 h-3.5 fill-rose-500 text-rose-500 flex-shrink-0" />
+                                  <AlertTriangle className="w-3 h-3 fill-rose-500 text-rose-500 flex-shrink-0" />
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                            <p className="text-[10px] text-slate-400 truncate">
                               {item.category || 'Peralatan Keselamatan'}
                             </p>
                           </div>
                         </div>
 
                         {/* Sisi Kanan: Penonjolan Angka Metrik (Pill Badge) */}
-                        <div className="flex flex-col items-end flex-shrink-0 pl-2">
-                          <div className={`${rankStyles.pill} font-extrabold text-base sm:text-lg px-2.5 py-0.5 rounded-lg border shadow-xs`}>
+                        <div className="flex flex-col items-end flex-shrink-0 pl-1">
+                          <div className={`${rankStyles.pill} font-extrabold text-xs sm:text-sm px-2 py-0.5 rounded-lg border shadow-xs`}>
                             {item.totalDefects}
                           </div>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium mt-0.5">
-                            Temuan Defek
+                          <span className="text-[9px] text-slate-400 dark:text-slate-400 font-medium mt-0.5">
+                            Temuan
                           </span>
                         </div>
                       </div>
 
                       {/* Mini Bar Persentase */}
-                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${rankStyles.bar}`}
                           style={{ width: `${Math.max(5, item.percentage || 0)}%` }}
@@ -516,99 +537,78 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── ROW 2 KOLOM: BAR CHART (TOP 5 RIG TEMUAN) & LINE CHART (TREN MINGGUAN) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ── KARTU 4: BAR CHART (Top 5 Rig Temuan Rusak) ── */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+      {/* ── BARIS BAWAH: GRID PROPORSIONAL (METRIK PROGRES & TREN PENYELESAIAN) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ── 1. KOLOM KIRI (col-span-1): PERSENTASE TOTAL INSPEKSI (DONUT CHART) ── */}
+        <div className="col-span-1 md:col-span-1 bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-                  <BarChart3 className="w-4 h-4" />
+                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                  <PieIcon className="w-4 h-4" />
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    Top 5 Rig Temuan Rusak
+                    Persentase Total Inspeksi
                   </h2>
                   <p className="text-[11px] text-slate-400">
-                    Komponen rusak / servis ({periodLabel})
+                    Selesai vs Belum Selesai ({periodLabel})
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950 px-2 py-1 rounded-md">
-                Prioritas
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-1 rounded-md">
+                {percentageCompleted}% Tercapai
               </span>
             </div>
 
-            {/* Area Visualisasi Bar Chart */}
-            <div className="h-64 sm:h-72 w-full mt-4">
-              {topDefectRigs.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={topDefectRigs}
-                    margin={{ top: 15, right: 10, left: -20, bottom: 5 }}
+            {/* Area Visualisasi Pie / Donut Chart */}
+            <div className="h-60 sm:h-64 w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={completionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={4}
+                    dataKey="value"
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                    <XAxis
-                      dataKey="rig"
-                      tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }}
-                      axisLine={{ stroke: '#cbd5e1' }}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 10, fill: '#64748b' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#0f172a',
-                        borderColor: '#334155',
-                        borderRadius: '0.75rem',
-                        color: '#f8fafc',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}
-                      formatter={(value, name, item) => [
-                        `${value} Temuan Rusak (${item?.payload?.kategori || 'Komponen'})`,
-                        'Jumlah'
-                      ]}
-                      labelFormatter={(label) => `Rig: ${label}`}
-                    />
-                    <Bar
-                      dataKey="temuanRusak"
-                      name="Temuan Alat Rusak"
-                      fill="#F43F5E"
-                      radius={[6, 6, 0, 0]}
-                      barSize={26}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-4">
-                  <ShieldCheck className="w-10 h-10 text-emerald-500 mb-2" />
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Nihil Temuan Alat Rusak</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Semua peralatan dalam kondisi prima pada periode ini.</p>
-                </div>
-              )}
+                    {completionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#334155',
+                      borderRadius: '0.75rem',
+                      color: '#f8fafc',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                    formatter={(value, name) => [`${value} Formulir (${totalFormulir > 0 ? Math.round((value / totalFormulir) * 100) : 0}%)`, name]}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 mt-2 flex items-center justify-between text-xs">
-            <span className="text-rose-700 dark:text-rose-300 font-medium truncate">
-              {topDefectRigs.length > 0 
-                ? `Tertinggi: ${topDefectRigs[0].rig} (${topDefectRigs[0].temuanRusak} temuan)` 
-                : 'Kondisi Peralatan: Baik'}
-            </span>
-            <span className="text-[11px] text-rose-600 dark:text-rose-400 font-bold flex-shrink-0 ml-2">
-              {topDefectRigs.length > 0 ? 'Follow up' : 'Optimal'}
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 mt-2 flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400">Total Wajib: {totalFormulir} Form</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              Sisa {sisaFormulir} Form
             </span>
           </div>
         </div>
 
-        {/* ── KARTU 5: TREN PENGISIAN FORMULIR MINGGUAN (Line Chart) ── */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+        {/* ── 2. KOLOM TENGAH & KANAN (col-span-2): TREN PENGISIAN MINGGUAN (LINE CHART) ── */}
+        <div className="col-span-1 md:col-span-2 bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
               <div className="flex items-center gap-2">
@@ -638,7 +638,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Area Visualisasi Line Chart */}
-            <div className="h-64 sm:h-72 w-full mt-4">
+            <div className="h-60 sm:h-64 w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={weeklyTrends}
@@ -671,7 +671,7 @@ export default function AnalyticsPage() {
                   />
                   <Legend
                     verticalAlign="bottom"
-                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
                   />
                   <Line
                     type="monotone"
