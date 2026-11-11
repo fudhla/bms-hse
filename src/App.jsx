@@ -25,6 +25,7 @@ import ReportPage from './pages/ReportPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AdminRigAccountsPage from './pages/AdminRigAccountsPage';
 import ManageRigPage from './pages/ManageRigPage';
+import FormBuilderIndex from './pages/admin/FormBuilderIndex';
 
 // Halaman Buku Panduan Pengguna (User Guide)
 import UserGuide from './pages/UserGuide';
@@ -36,6 +37,7 @@ function pathToTabId(pathname) {
   if (clean === 'alert' || clean === 'alerts' || clean === 'admin/alerts' || clean === 'rig/alerts') return 'alert';
   if (clean === 'rekap' || clean === 'admin/reports') return 'rekap';
   if (clean === 'analitik' || clean === 'admin/analytics') return 'analitik';
+  if (clean === 'admin/form-builder' || clean === 'form-builder') return 'form-builder';
   if (clean === 'admin/rig-accounts' || clean === 'manage-rigs' || clean === 'admin/manage-rigs') return 'rig-accounts';
   if (clean.startsWith('admin/')) return clean.replace('admin/', '');
   // strip query string — split on '?'
@@ -193,6 +195,8 @@ function ProtectedLayout() {
             <Route path="/analitik"           element={<AnalyticsPage />} />
             <Route path="/admin/alerts"       element={<AlertPage />} />
             <Route path="/admin/reports"      element={<ReportPage />} />
+            <Route path="/admin/form-builder" element={<FormBuilderIndex />} />
+            <Route path="/form-builder"       element={<FormBuilderIndex />} />
             <Route path="/admin/rig-accounts" element={<ManageRigPage />} />
             <Route path="/manage-rigs"       element={<ManageRigPage />} />
             <Route path="/admin/manage-rigs" element={<ManageRigPage />} />

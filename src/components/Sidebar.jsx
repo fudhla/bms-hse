@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   BarChart3,
+  FilePlus2,
   Users,
   // Karyawan form icons
   Flame,
@@ -74,6 +75,13 @@ const ADMIN_MENU_GROUPS = [
   {
     groupTitle: 'PENGATURAN',
     items: [
+      {
+        id: 'form-builder',
+        label: 'Kelola Master Form',
+        icon: FilePlus2,
+        path: '/admin/form-builder',
+        description: 'Dynamic Form Builder K3',
+      },
       {
         id: 'rig-accounts',
         label: 'Kelola Akun Rig',
@@ -211,7 +219,8 @@ export default function Sidebar({
     activeTab === id ||
     (id === 'alert' && (activeTab === 'alerts' || activeTab === 'admin/alerts' || activeTab === 'rig/alerts')) ||
     (id === 'rekap' && (activeTab === 'reports' || activeTab === 'admin/reports')) ||
-    (id === 'analitik' && (activeTab === 'analytics' || activeTab === 'admin/analytics'));
+    (id === 'analitik' && (activeTab === 'analytics' || activeTab === 'admin/analytics')) ||
+    (id === 'form-builder' && (activeTab === 'form-builder' || activeTab === 'admin/form-builder'));
 
   return (
     <>
