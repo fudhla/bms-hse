@@ -720,14 +720,14 @@ export default function DashboardOverview({ onSelectForm }) {
                       const statusLaporan = form?.status_laporan || (fStatus === 'submitted' ? 'Submitted' : 'Draft');
                       const rowClass = statusLaporan === 'Revision'
                         ? 'bg-orange-100 dark:bg-orange-950/60 hover:bg-orange-200/70 text-orange-800 dark:text-orange-200 border-2 border-orange-500 shadow-sm'
-                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
+                        : (statusLaporan === 'Approved' || statusLaporan === 'Submitted' || fStatus === 'submitted')
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
                         : fStatus === 'draft'
                         ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-900 dark:text-amber-200'
                         : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
                       const iconClass = statusLaporan === 'Revision'
                         ? 'text-orange-600 dark:text-orange-400'
-                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
+                        : (statusLaporan === 'Approved' || statusLaporan === 'Submitted' || fStatus === 'submitted')
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : fStatus === 'draft'
                         ? 'text-amber-500 dark:text-amber-400'

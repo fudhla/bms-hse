@@ -1050,6 +1050,78 @@ app.delete('/api/available-years/:year', requireAdmin, async (req, res) => {
   }
 });
 
+// Helper klasifikasi dan standardisasi nama barang untuk analitik top defect
+function extractStandardItemName(rawName) {
+  if (!rawName) return 'Peralatan HSE';
+  const lower = rawName.toLowerCase();
+  
+  if (lower.includes('harness') || lower.includes('lanyard')) {
+    return 'Full Body Harness & Lanyard';
+  }
+  if (lower.includes('eyewash') || lower.includes('eye wash') || lower.includes('shower')) {
+    return 'Eye Wash & Shower Station';
+  }
+  if (lower.includes('scba') || lower.includes('pernapasan')) {
+    return 'Unit Tabung Silinder SCBA';
+  }
+  if (lower.includes('apar') || lower.includes('powder') || lower.includes('co2') || lower.includes('pemadam')) {
+    return 'Tabung Pemadam APAR';
+  }
+  if (lower.includes('p3k') || lower.includes('first aid')) {
+    if (lower.includes('povidon') || lower.includes('iodin')) return 'Kotak P3K (Povidon Iodin)';
+    if (lower.includes('kasa')) return 'Kotak P3K (Kasa Steril)';
+    if (lower.includes('perban')) return 'Kotak P3K (Perban Roll)';
+    if (lower.includes('gelas')) return 'Kotak P3K (Gelas Cuci Mata)';
+    if (lower.includes('plester')) return 'Kotak P3K (Plester Cepat)';
+    return 'Kotak & Isi Paket P3K';
+  }
+  if (lower.includes('stretcher') || lower.includes('tandu')) {
+    return 'Tandu Basket Stretcher';
+  }
+  if (lower.includes('spill') || lower.includes('absorbent')) {
+    return 'Spill Kit & Absorbent Boom';
+  }
+  if (lower.includes('oxigent') || lower.includes('oksigen') || lower.includes('oxygen')) {
+    return 'Silinder Tabung Oksigen Medis';
+  }
+  if (lower.includes('apd') || lower.includes('pelindung diri')) {
+    if (lower.includes('goggle') || lower.includes('kacamata')) return 'Safety Goggles';
+    if (lower.includes('helmet') || lower.includes('helm')) return 'Safety Helmet';
+    if (lower.includes('shoes') || lower.includes('sepatu')) return 'Safety Shoes';
+    if (lower.includes('ear')) return 'Ear Plug / Ear Muff';
+    return 'Alat Pelindung Diri (APD)';
+  }
+  
+  return rawName.replace(/\s*#\d+/g, '').replace(/\s*\([^)]*\)/g, '').trim() || rawName;
+}
+
+function getItemCategory(itemName) {
+  const lower = itemName.toLowerCase();
+  if (lower.includes('harness')) return 'Proteksi Jatuh / Ketinggian';
+  if (lower.includes('apar')) return 'Proteksi & Pemadam Api';
+  if (lower.includes('eyewash') || lower.includes('shower')) return 'Fasilitas Tanggap Darurat';
+  if (lower.includes('scba')) return 'Peralatan Pernapasan';
+  if (lower.includes('p3k')) return 'Pertolongan Pertama (Medis)';
+  if (lower.includes('tandu') || lower.includes('stretcher')) return 'Evakuasi & Pertolongan Medis';
+  if (lower.includes('spill')) return 'Penanggulangan Tumpahan Kimia';
+  if (lower.includes('oksigen')) return 'Peralatan Medis Darurat';
+  if (lower.includes('apd') || lower.includes('goggle') || lower.includes('helmet') || lower.includes('shoes')) return 'Alat Pelindung Diri';
+  return 'Peralatan Keselamatan';
+}
+
+function getItemIcon(itemName) {
+  const lower = itemName.toLowerCase();
+  if (lower.includes('harness')) return 'Shield';
+  if (lower.includes('apar')) return 'Flame';
+  if (lower.includes('eyewash')) return 'Eye';
+  if (lower.includes('scba')) return 'Wind';
+  if (lower.includes('p3k')) return 'HeartPulse';
+  if (lower.includes('tandu') || lower.includes('stretcher')) return 'Activity';
+  if (lower.includes('spill')) return 'Box';
+  if (lower.includes('oksigen')) return 'Activity';
+  return 'AlertTriangle';
+}
+
 // ── 6.5 ENDPOINT ANALYTICS & EXECUTIVE INTELLIGENCE PER PERIODE ──
 app.get('/api/analytics', async (req, res) => {
   try {
@@ -1115,17 +1187,23 @@ app.get('/api/analytics', async (req, res) => {
          OR (YEAR(created_at) = ? AND MONTH(created_at) = ?)
     `, [monthPattern, selectedYear, selectedMonth]);
 
-    const temuanRusakCount = alerts.length;
+    // Jika inspection_alerts untuk periode ini belum ada namun ada data inspections, ambil alert langsung dari form_data
+    let periodAlerts = alerts;
+    if (periodAlerts.length === 0 && inspections.length > 0) {
+      periodAlerts = extractAlertsFromInspections(inspections);
+    }
+
+    const temuanRusakCount = periodAlerts.length;
 
     // Hitung temuan rusak per Rig (Top 5 Defect Rigs)
     const rigDefectsMap = {};
-    alerts.forEach(a => {
-      const r = a.rig_no || 'Rig';
+    periodAlerts.forEach(a => {
+      const r = a.rig_no || a.rigNo || 'Rig';
       if (!rigDefectsMap[r]) {
         rigDefectsMap[r] = {
           rig: r,
           temuanRusak: 0,
-          kategori: a.komponen_alat || a.form_type || 'Peralatan'
+          kategori: a.komponen_alat || a.komponenAlat || a.form_type || a.jenisInspeksi || 'Peralatan'
         };
       }
       rigDefectsMap[r].temuanRusak += 1;
@@ -1134,6 +1212,33 @@ app.get('/api/analytics', async (req, res) => {
     const topDefectRigs = Object.values(rigDefectsMap)
       .sort((a, b) => b.temuanRusak - a.temuanRusak)
       .slice(0, 5);
+
+    // 4.1 Agregasi Top 3 Barang Sering Rusak (Top Defective Items)
+    const itemDefectsMap = {};
+    periodAlerts.forEach(a => {
+      const rawComp = a.komponen_alat || a.komponenAlat || a.form_type || a.jenisInspeksi || 'Peralatan HSE';
+      const stdName = extractStandardItemName(rawComp);
+      if (!itemDefectsMap[stdName]) {
+        itemDefectsMap[stdName] = {
+          itemName: stdName,
+          totalDefects: 0,
+          category: getItemCategory(stdName),
+          icon: a.icon || getItemIcon(stdName)
+        };
+      }
+      itemDefectsMap[stdName].totalDefects += 1;
+    });
+
+    const totalAllItemDefects = Object.values(itemDefectsMap).reduce((acc, curr) => acc + curr.totalDefects, 0);
+
+    const topDefectiveItems = Object.values(itemDefectsMap)
+      .sort((a, b) => b.totalDefects - a.totalDefects)
+      .slice(0, 3)
+      .map((item, idx) => ({
+        ...item,
+        rank: idx + 1,
+        percentage: totalAllItemDefects > 0 ? Math.round((item.totalDefects / totalAllItemDefects) * 100) : 0
+      }));
 
     // 5. Agregasi Top 3 HFO Teraktif
     const hfoMap = {};
@@ -1241,6 +1346,7 @@ app.get('/api/analytics', async (req, res) => {
         completionData,
         topDefectRigs,
         topPerformers,
+        topDefectiveItems,
         weeklyTrends
       }
     });
@@ -1250,6 +1356,90 @@ app.get('/api/analytics', async (req, res) => {
       success: false,
       message: 'Gagal memuat analitik: ' + err.message
     });
+  }
+});
+
+// ── 6.6 ENDPOINT TOP DEFECTS (BARANG SERING RUSAK) ───────────────
+app.get('/api/analytics/top-defects', async (req, res) => {
+  try {
+    const now = new Date();
+    let selectedMonth = parseInt(req.query.month, 10);
+    let selectedYear = parseInt(req.query.year, 10);
+    const periodQuery = req.query.period;
+
+    if (periodQuery && periodQuery.includes('-')) {
+      const parts = periodQuery.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!isNaN(y) && y >= 2000) selectedYear = y;
+      if (!isNaN(m) && m >= 1 && m <= 12) selectedMonth = m;
+    }
+
+    if (!selectedMonth || isNaN(selectedMonth)) selectedMonth = now.getMonth() + 1;
+    if (!selectedYear || isNaN(selectedYear)) selectedYear = now.getFullYear();
+
+    const monthStr = String(selectedMonth).padStart(2, '0');
+    const periodStr = `${selectedYear}-${monthStr}`;
+    const monthPattern = `${periodStr}%`;
+
+    const [alerts] = await pool.query(`
+      SELECT id, rig_no, form_type, komponen_alat, kondisi, catatan_temuan, tanggal, status_alert, created_at
+      FROM inspection_alerts
+      WHERE tanggal LIKE ? 
+         OR (YEAR(created_at) = ? AND MONTH(created_at) = ?)
+    `, [monthPattern, selectedYear, selectedMonth]);
+
+    let periodAlerts = alerts;
+    if (periodAlerts.length === 0) {
+      const [inspections] = await pool.query(`
+        SELECT id, form_type, rig_no, tanggal, status, hfo_name, tool_pusher_name, form_data, created_at, updated_at
+        FROM inspections
+        WHERE period = ? 
+           OR tanggal LIKE ? 
+           OR ((period IS NULL OR period = '') AND (YEAR(created_at) = ? AND MONTH(created_at) = ?))
+        ORDER BY updated_at DESC, created_at DESC
+      `, [periodStr, monthPattern, selectedYear, selectedMonth]);
+
+      if (inspections.length > 0) {
+        periodAlerts = extractAlertsFromInspections(inspections);
+      }
+    }
+
+    const itemDefectsMap = {};
+    periodAlerts.forEach(a => {
+      const rawComp = a.komponen_alat || a.komponenAlat || a.form_type || a.jenisInspeksi || 'Peralatan HSE';
+      const stdName = extractStandardItemName(rawComp);
+      if (!itemDefectsMap[stdName]) {
+        itemDefectsMap[stdName] = {
+          itemName: stdName,
+          totalDefects: 0,
+          category: getItemCategory(stdName),
+          icon: a.icon || getItemIcon(stdName)
+        };
+      }
+      itemDefectsMap[stdName].totalDefects += 1;
+    });
+
+    const totalAllItemDefects = Object.values(itemDefectsMap).reduce((acc, curr) => acc + curr.totalDefects, 0);
+
+    const topDefects = Object.values(itemDefectsMap)
+      .sort((a, b) => b.totalDefects - a.totalDefects)
+      .slice(0, 3)
+      .map((item, idx) => ({
+        ...item,
+        rank: idx + 1,
+        percentage: totalAllItemDefects > 0 ? Math.round((item.totalDefects / totalAllItemDefects) * 100) : 0
+      }));
+
+    return res.json({
+      success: true,
+      data: topDefects,
+      period: periodStr,
+      totalDefects: totalAllItemDefects
+    });
+  } catch (err) {
+    console.error('Error in /api/analytics/top-defects:', err);
+    return res.status(500).json({ success: false, message: 'Gagal mengambil data top-defects: ' + err.message });
   }
 });
 

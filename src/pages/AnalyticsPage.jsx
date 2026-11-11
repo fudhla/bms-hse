@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   Trophy,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  PackageX
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -106,6 +107,7 @@ export default function AnalyticsPage() {
 
   const topPerformers = analyticsData?.topPerformers || [];
   const topDefectRigs = analyticsData?.topDefectRigs || [];
+  const topDefectiveItems = analyticsData?.topDefectiveItems || [];
   const weeklyTrends = analyticsData?.weeklyTrends || [];
 
   return (
@@ -382,7 +384,141 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── KARTU 3: BAR CHART (Top 5 Rig Temuan Rusak - Kanan) ── */}
+        {/* ── KARTU 3: TOP 3 BARANG SERING RUSAK (Klasemen & Evaluasi Kualitas K3) ── */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                  <PackageX className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white">
+                    Top 3 Barang Sering Rusak
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Evaluasi kualitas &amp; temuan cacat ({periodLabel})
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950 px-2 py-1 rounded-md border border-rose-200/60 dark:border-rose-900/60">
+                Purchasing
+              </span>
+            </div>
+
+            {/* List 3 Baris Rapi & Klasemen Ranking */}
+            {topDefectiveItems.length > 0 ? (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">
+                {topDefectiveItems.map((item, index) => {
+                  const rankStyles = [
+                    {
+                      badge: 'bg-rose-100 text-rose-700 ring-2 ring-rose-500 ring-offset-2 dark:bg-rose-950 dark:text-rose-300 dark:ring-rose-500 dark:ring-offset-slate-900',
+                      pill: 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50',
+                      bar: 'bg-rose-500',
+                      isFirst: true
+                    },
+                    {
+                      badge: 'bg-orange-100 text-orange-700 ring-2 ring-orange-400 ring-offset-2 dark:bg-orange-950/60 dark:text-orange-300 dark:ring-orange-500 dark:ring-offset-slate-900',
+                      pill: 'bg-orange-50 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-900/50',
+                      bar: 'bg-orange-500',
+                      isFirst: false
+                    },
+                    {
+                      badge: 'bg-amber-100 text-amber-700 ring-2 ring-amber-400 ring-offset-2 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-500 dark:ring-offset-slate-900',
+                      pill: 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50',
+                      bar: 'bg-amber-500',
+                      isFirst: false
+                    }
+                  ][index] || {
+                    badge: 'bg-slate-100 text-slate-700 ring-2 ring-slate-300 ring-offset-2 dark:bg-slate-800 dark:text-slate-300',
+                    pill: 'bg-slate-50 text-slate-700 border-slate-200',
+                    bar: 'bg-slate-500',
+                    isFirst: false
+                  };
+
+                  return (
+                    <div
+                      key={`${item.itemName}-${index}`}
+                      className="py-2.5 px-2 -mx-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 rounded-xl space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        {/* Sisi Kiri: Badge Rank & Nama Barang */}
+                        <div className="flex items-center gap-3 min-w-0 pr-2">
+                          <div className={`w-8 h-8 rounded-full ${rankStyles.badge} font-black text-xs flex items-center justify-center flex-shrink-0 transition-transform duration-200`}>
+                            {rankStyles.isFirst ? (
+                              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 animate-pulse" />
+                            ) : (
+                              `#${index + 1}`
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className={`text-sm truncate ${rankStyles.isFirst ? 'font-extrabold text-slate-900 dark:text-white' : 'font-bold text-slate-800 dark:text-slate-200'}`}>
+                                {item.itemName}
+                              </p>
+                              {rankStyles.isFirst && (
+                                <span title="Paling Sering Rusak" className="inline-flex items-center text-rose-500">
+                                  <AlertTriangle className="w-3.5 h-3.5 fill-rose-500 text-rose-500 flex-shrink-0" />
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                              {item.category || 'Peralatan Keselamatan'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sisi Kanan: Penonjolan Angka Metrik (Pill Badge) */}
+                        <div className="flex flex-col items-end flex-shrink-0 pl-2">
+                          <div className={`${rankStyles.pill} font-extrabold text-base sm:text-lg px-2.5 py-0.5 rounded-lg border shadow-xs`}>
+                            {item.totalDefects}
+                          </div>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium mt-0.5">
+                            Temuan Defek
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Mini Bar Persentase */}
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${rankStyles.bar}`}
+                          style={{ width: `${Math.max(5, item.percentage || 0)}%` }}
+                          title={`${item.percentage}% dari total temuan kerusakan`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-44 flex flex-col items-center justify-center text-center text-slate-400 p-4">
+                <ShieldCheck className="w-8 h-8 text-emerald-500 mb-1" />
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Nihil Temuan Barang Rusak</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Semua perlengkapan K3 dalam kondisi prima pada periode ini.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Area Footer Highlight Evaluasi Purchasing */}
+          <div className="p-3 rounded-xl bg-gradient-to-r from-rose-50/60 via-orange-50/20 to-transparent dark:from-rose-950/40 dark:via-orange-950/10 dark:to-transparent border border-rose-100/70 dark:border-rose-900/40 mt-3 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+              <span className="text-slate-600 dark:text-slate-300 font-medium truncate">
+                Prioritas: <strong className="text-slate-900 dark:text-white font-bold">{topDefectiveItems[0]?.itemName || 'Nihil'}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-bold flex-shrink-0 ml-2">
+              <span>Evaluasi Vendor</span>
+              <span className="text-xs">⚠️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── ROW 2 KOLOM: BAR CHART (TOP 5 RIG TEMUAN) & LINE CHART (TREN MINGGUAN) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── KARTU 4: BAR CHART (Top 5 Rig Temuan Rusak) ── */}
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -405,7 +541,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Area Visualisasi Bar Chart */}
-            <div className="h-60 sm:h-64 w-full mt-4">
+            <div className="h-64 sm:h-72 w-full mt-4">
               {topDefectRigs.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -470,108 +606,110 @@ export default function AnalyticsPage() {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* ── ROW: TREN PENGISIAN FORMULIR MINGGUAN (FULL WIDTH) ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-cyan-400">
-              <TrendingUp className="w-4 h-4" />
+        {/* ── KARTU 5: TREN PENGISIAN FORMULIR MINGGUAN (Line Chart) ── */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-cyan-400">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Tren Pengisian Mingguan
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Realisasi vs target mingguan ({periodLabel})
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <span className="w-3 h-0.5 bg-blue-500 rounded-full" />
+                  <span>Target ({Math.round(totalFormulir / 4)}/mgg)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 font-bold">
+                  <span className="w-3 h-0.5 bg-emerald-500 rounded-full" />
+                  <span>Realisasi Masuk</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                Tren Pengisian Formulir Mingguan
-              </h2>
-              <p className="text-[11px] text-slate-400">
-                Perbandingan realisasi pengisian vs target mingguan ({periodLabel})
-              </p>
+
+            {/* Area Visualisasi Line Chart */}
+            <div className="h-64 sm:h-72 w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={weeklyTrends}
+                  margin={{ top: 15, right: 20, left: -10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                  <XAxis
+                    dataKey="minggu"
+                    tick={{ fontSize: 11, fill: '#64748b', fontWeight: 'bold' }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={[0, 'auto']}
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#334155',
+                      borderRadius: '0.75rem',
+                      color: '#f8fafc',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                    formatter={(value, name) => [`${value} Formulir`, name === 'realisasi' ? 'Realisasi Masuk' : 'Target Wajib']}
+                    labelFormatter={(label) => `${label} - Periode ${periodLabel}`}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="target"
+                    name="Target Wajib"
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ r: 4, fill: '#3B82F6' }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="realisasi"
+                    name="Realisasi Pengisian"
+                    stroke="#10B981"
+                    strokeWidth={3}
+                    dot={{ r: 5, fill: '#10B981' }}
+                    activeDot={{ r: 7 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-              <span className="w-3 h-0.5 bg-blue-500 rounded-full" />
-              <span>Target ({Math.round(totalFormulir / 4)}/mgg)</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 font-bold">
-              <span className="w-3 h-0.5 bg-emerald-500 rounded-full" />
-              <span>Realisasi Masuk</span>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+            {weeklyTrends.map((w) => (
+              <div key={w.minggu} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40">
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{w.minggu}</div>
+                <div className="text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5">
+                  {w.realisasi} <span className="text-[10px] font-normal text-slate-400">/ {w.target}</span>
+                </div>
+                <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                  {w.onTimeRate}% Disiplin
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Area Visualisasi Line Chart */}
-        <div className="h-72 sm:h-80 w-full mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={weeklyTrends}
-              margin={{ top: 15, right: 20, left: -10, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-              <XAxis
-                dataKey="minggu"
-                tick={{ fontSize: 12, fill: '#64748b', fontWeight: 'bold' }}
-                axisLine={{ stroke: '#cbd5e1' }}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 'auto']}
-                tick={{ fontSize: 11, fill: '#64748b' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#0f172a',
-                  borderColor: '#334155',
-                  borderRadius: '0.75rem',
-                  color: '#f8fafc',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}
-                formatter={(value, name) => [`${value} Formulir`, name === 'realisasi' ? 'Realisasi Masuk' : 'Target Wajib']}
-                labelFormatter={(label) => `${label} - Periode ${periodLabel}`}
-              />
-              <Legend
-                verticalAlign="bottom"
-                wrapperStyle={{ fontSize: '12px', paddingTop: '16px' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="target"
-                name="Target Wajib"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={{ r: 4, fill: '#3B82F6' }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="realisasi"
-                name="Realisasi Pengisian"
-                stroke="#10B981"
-                strokeWidth={3}
-                dot={{ r: 5, fill: '#10B981' }}
-                activeDot={{ r: 7 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-          {weeklyTrends.map((w) => (
-            <div key={w.minggu} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40">
-              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{w.minggu}</div>
-              <div className="text-base font-black text-slate-800 dark:text-slate-100 mt-0.5">
-                {w.realisasi} <span className="text-xs font-normal text-slate-400">/ {w.target}</span>
-              </div>
-              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                {w.onTimeRate}% Disiplin
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>
