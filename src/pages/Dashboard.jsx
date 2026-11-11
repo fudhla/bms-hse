@@ -423,8 +423,6 @@ export default function Dashboard({ onSelectForm }) {
                         ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
                         : statusLaporan === 'Approved'
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
-                        : statusLaporan === 'Rejected'
-                        ? 'bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100/60 text-rose-900 dark:text-rose-200'
                         : fStatus === 'submitted'
                         ? 'bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100/60 text-blue-900 dark:text-blue-200'
                         : fStatus === 'draft'
@@ -435,8 +433,6 @@ export default function Dashboard({ onSelectForm }) {
                         ? 'text-amber-600 dark:text-amber-400'
                         : statusLaporan === 'Approved'
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : statusLaporan === 'Rejected'
-                        ? 'text-rose-600 dark:text-rose-400'
                         : fStatus === 'submitted'
                         ? 'text-blue-600 dark:text-blue-400'
                         : fStatus === 'draft'
@@ -470,11 +466,6 @@ export default function Dashboard({ onSelectForm }) {
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
                                 <span>Disetujui</span>
-                              </span>
-                            ) : statusLaporan === 'Rejected' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-rose-700 dark:text-rose-400 bg-rose-100/60 dark:bg-rose-900/60 px-1.5 py-0.5 rounded">
-                                <XCircle className="w-3 h-3" />
-                                <span>Ditolak</span>
                               </span>
                             ) : fStatus === 'submitted' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/60 px-1.5 py-0.5 rounded">

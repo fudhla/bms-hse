@@ -39,7 +39,7 @@ export function useInspectionForm({
 
   const [recordId, setRecordId]         = useState(null);
   const [status, setStatus]             = useState('draft'); // 'draft' | 'submitted'
-  const [statusLaporan, setStatusLaporan] = useState('Draft'); // 'Draft' | 'Submitted' | 'Approved' | 'Revision' | 'Rejected'
+  const [statusLaporan, setStatusLaporan] = useState('Draft'); // 'Draft' | 'Submitted' | 'Approved' | 'Revision'
   const [catatanAdmin, setCatatanAdmin]   = useState('');
   const [isLocked, setIsLocked]         = useState(false);
   const [adminEditMode, setAdminEditMode] = useState(false);
@@ -180,11 +180,6 @@ export function useInspectionForm({
             setMessage({
               type: 'success',
               text: `✓ Laporan resmi Disetujui (Approved) oleh Administrator. Dokumen telah tervalidasi sah.`,
-            });
-          } else if (rowStatusLaporan === 'Rejected') {
-            setMessage({
-              type: 'error',
-              text: `✗ Laporan Ditolak (Rejected) oleh Administrator. Silakan hubungi pengawas HSE untuk arahan lebih lanjut.`,
             });
           } else if (isSub) {
             if (isAdmin) {
@@ -405,11 +400,6 @@ export function useInspectionForm({
         setMessage({
           type: 'warning',
           text: `⚠️ Laporan berhasil dikembalikan ke Rig untuk direvisi dengan catatan: "${note}"`,
-        });
-      } else if (newStatus === 'Rejected') {
-        setMessage({
-          type: 'error',
-          text: '✗ Laporan telah Ditolak (Rejected) oleh Administrator.',
         });
       }
       return true;

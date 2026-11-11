@@ -350,7 +350,7 @@ export default function FormSubmitFooter({
       <div className="pt-6 border-t border-slate-300">
         {/* ── PANEL KEPUTUSAN ADMINISTRATOR (APPROVAL WORKFLOW) ── */}
         {/* Ditampilkan tepat di atas kotak Mode Pembaruan Data jika pengguna adalah Administrator dan form berstatus Submitted (atau sudah memiliki status review) */}
-        {isAdmin && (status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || statusLaporan === 'Revision' || statusLaporan === 'Rejected') && (
+        {isAdmin && (status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || statusLaporan === 'Revision') && (
           <div className="mb-4">
             <AdminApprovalPanel
               isAdmin={isAdmin}
@@ -419,26 +419,20 @@ export default function FormSubmitFooter({
             </div>
           </div>
         ) : isLocked ? (
-          /* KASUS 2: TERKUNCI / SUBMITTED / APPROVED / REJECTED UNTUK USER BIASA (RIG) */
+          /* KASUS 2: TERKUNCI / SUBMITTED / APPROVED UNTUK USER BIASA (RIG) */
           <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border shadow-xs ${
             statusLaporan === 'Approved'
               ? 'bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border-emerald-300'
-              : statusLaporan === 'Rejected'
-              ? 'bg-gradient-to-r from-rose-50/90 to-rose-100/40 border-rose-300'
               : 'bg-gradient-to-r from-blue-50/90 to-blue-100/40 border-blue-300'
           }`}>
             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
               <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm ${
                 statusLaporan === 'Approved'
                   ? 'bg-emerald-600 shadow-emerald-600/30'
-                  : statusLaporan === 'Rejected'
-                  ? 'bg-rose-600 shadow-rose-600/30'
                   : 'bg-blue-600 shadow-blue-600/30'
               }`}>
                 {statusLaporan === 'Approved' ? (
                   <CheckCircle className="w-5 h-5 text-white" />
-                ) : statusLaporan === 'Rejected' ? (
-                  <X className="w-5 h-5 text-white stroke-[2.5]" />
                 ) : (
                   <Lock className="w-5 h-5 text-white" />
                 )}
@@ -447,15 +441,11 @@ export default function FormSubmitFooter({
                 <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
                   {statusLaporan === 'Approved'
                     ? 'Formulir Inspeksi Telah Disetujui (Approved)'
-                    : statusLaporan === 'Rejected'
-                    ? 'Laporan Inspeksi Ditolak (Rejected)'
                     : 'Formulir Inspeksi Telah Selesai & Terkunci'}
                 </h4>
                 <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
                   {statusLaporan === 'Approved'
                     ? 'Laporan telah resmi disetujui oleh Administrator HSE. Dokumen terkunci permanen.'
-                    : statusLaporan === 'Rejected'
-                    ? (catatanAdmin ? `Catatan Admin: ${catatanAdmin}` : 'Laporan ini ditolak oleh Administrator HSE.')
                     : 'Data telah resmi tersimpan di database (read-only) & menunggu verifikasi Admin HSE.'}
                 </p>
               </div>

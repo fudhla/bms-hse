@@ -199,11 +199,6 @@ export default function FormActionHeader({
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
               <span>✓ Disetujui Admin (Approved)</span>
             </span>
-          ) : statusLaporan === 'Rejected' ? (
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 shadow-xs">
-              <X className="w-3.5 h-3.5 text-rose-700" />
-              <span>✕ Ditolak Admin (Rejected)</span>
-            </span>
           ) : statusLaporan === 'Revision' ? (
             <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs animate-pulse">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />

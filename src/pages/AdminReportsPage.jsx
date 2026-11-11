@@ -186,7 +186,6 @@ export default function AdminReportsPage() {
         if (selectedStatus === 'draft' && item.status !== 'draft') return false;
         if (selectedStatus === 'Approved' && itemStatusLaporan !== 'Approved') return false;
         if (selectedStatus === 'Revision' && itemStatusLaporan !== 'Revision') return false;
-        if (selectedStatus === 'Rejected' && itemStatusLaporan !== 'Rejected') return false;
         if (selectedStatus === 'Submitted' && itemStatusLaporan !== 'Submitted') return false;
       }
 
@@ -420,7 +419,6 @@ export default function AdminReportsPage() {
               <option value="Approved">✓ Disetujui (Approved)</option>
               <option value="Submitted">⏳ Menunggu Review (Submitted)</option>
               <option value="Revision">⚠️ Perlu Revisi (Revision)</option>
-              <option value="Rejected">✕ Ditolak (Rejected)</option>
               <option value="draft">Draft (Berjalan)</option>
             </select>
 
@@ -558,11 +556,6 @@ export default function AdminReportsPage() {
                           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
                             <AlertTriangle className="w-3 h-3 text-amber-600" />
                             <span>Revision</span>
-                          </span>
-                        ) : item.status_laporan === 'Rejected' ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
-                            <X className="w-3 h-3 text-rose-600" />
-                            <span>Rejected</span>
                           </span>
                         ) : isSubmitted ? (
                           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-cyan-300 border border-blue-300 dark:border-blue-800">

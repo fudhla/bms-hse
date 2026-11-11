@@ -2789,11 +2789,10 @@ const handleReportReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID laporan wajib disertakan' });
     }
 
-    // Normalisasi status review (case-insensitive)
+    // Normalisasi status review (case-insensitive) - Sesuai kaidah K3, laporan wajib diperbaiki (Revision), bukan ditolak (Rejected)
     const validMap = {
       'approved': 'Approved',
       'revision': 'Revision',
-      'rejected': 'Rejected',
       'submitted': 'Submitted',
       'draft': 'Draft'
     };
@@ -2803,7 +2802,7 @@ const handleReportReview = async (req, res) => {
     if (!finalStatus) {
       return res.status(400).json({ 
         success: false, 
-        message: "Status laporan tidak valid. Pilihan: 'Approved', 'Revision', 'Rejected', 'Submitted', 'Draft'" 
+        message: "Status laporan tidak valid. Pilihan: 'Approved', 'Revision', 'Submitted', 'Draft'" 
       });
     }
 
