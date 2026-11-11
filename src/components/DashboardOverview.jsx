@@ -394,7 +394,7 @@ export default function DashboardOverview({ onSelectForm }) {
                               <span>DISETUJUI</span>
                             </span>
                           ) : status === 'submitted' || form?.status_laporan === 'Submitted' ? (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-cyan-400 border border-blue-200 dark:border-blue-500/25">
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>TERKIRIM</span>
                             </span>
@@ -445,7 +445,7 @@ export default function DashboardOverview({ onSelectForm }) {
                           </div>
                         ) : status === 'submitted' ? (
                           <div className="space-y-1 text-slate-600 dark:text-slate-300">
-                            <div className="flex items-center space-x-1 text-blue-600 dark:text-cyan-400 font-semibold">
+                            <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                               <Clock className="w-3.5 h-3.5" />
                               <span>Tgl: {form?.last_submitted ? String(form.last_submitted).split('T')[0] : '-'} (Menunggu Review)</span>
                             </div>
@@ -478,7 +478,7 @@ export default function DashboardOverview({ onSelectForm }) {
                           : form?.status_laporan === 'Approved'
                           ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25'
                           : status === 'submitted'
-                          ? 'bg-blue-100/90 text-blue-900 border-t border-blue-200/90 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 group-hover:shadow-md dark:bg-blue-500/10 dark:text-cyan-400 dark:border-t dark:border-blue-500/25'
+                          ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25'
                           : status === 'draft'
                           ? 'bg-amber-100/90 text-amber-900 border-t border-amber-200/90 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 group-hover:shadow-md dark:bg-amber-500/10 dark:text-amber-400 dark:border-t dark:border-amber-500/25'
                           : 'bg-slate-100 text-slate-800 border-t border-slate-200 group-hover:bg-blue-600 group-hover:text-white dark:bg-slate-800 dark:text-slate-300'
@@ -741,19 +741,15 @@ export default function DashboardOverview({ onSelectForm }) {
                       const statusLaporan = form?.status_laporan || (fStatus === 'submitted' ? 'Submitted' : 'Draft');
                       const rowClass = statusLaporan === 'Revision'
                         ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
-                        : statusLaporan === 'Approved'
+                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
-                        : fStatus === 'submitted'
-                        ? 'bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100/60 text-blue-900 dark:text-blue-200'
                         : fStatus === 'draft'
                         ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-900 dark:text-amber-200'
                         : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
                       const iconClass = statusLaporan === 'Revision'
                         ? 'text-amber-600 dark:text-amber-400'
-                        : statusLaporan === 'Approved'
+                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : fStatus === 'submitted'
-                        ? 'text-blue-600 dark:text-blue-400'
                         : fStatus === 'draft'
                         ? 'text-amber-500 dark:text-amber-400'
                         : 'text-slate-400';
@@ -781,7 +777,7 @@ export default function DashboardOverview({ onSelectForm }) {
                                 <span>Disetujui</span>
                               </span>
                             ) : fStatus === 'submitted' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/60 px-1.5 py-0.5 rounded">
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
                                 <span>{form?.last_submitted ? String(form.last_submitted).split('T')[0] : 'Review'}</span>
                               </span>

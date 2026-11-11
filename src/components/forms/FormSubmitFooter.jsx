@@ -420,17 +420,9 @@ export default function FormSubmitFooter({
           </div>
         ) : isLocked ? (
           /* KASUS 2: TERKUNCI / SUBMITTED / APPROVED UNTUK USER BIASA (RIG) */
-          <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border shadow-xs ${
-            statusLaporan === 'Approved'
-              ? 'bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border-emerald-300'
-              : 'bg-gradient-to-r from-blue-50/90 to-blue-100/40 border-blue-300'
-          }`}>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border shadow-xs bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border-emerald-300">
             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
-              <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm ${
-                statusLaporan === 'Approved'
-                  ? 'bg-emerald-600 shadow-emerald-600/30'
-                  : 'bg-blue-600 shadow-blue-600/30'
-              }`}>
+              <div className="w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm bg-emerald-600 shadow-emerald-600/30">
                 {statusLaporan === 'Approved' ? (
                   <CheckCircle className="w-5 h-5 text-white" />
                 ) : (

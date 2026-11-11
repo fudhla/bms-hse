@@ -558,8 +558,8 @@ export default function AdminReportsPage() {
                             <span>Revision</span>
                           </span>
                         ) : isSubmitted ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-cyan-300 border border-blue-300 dark:border-blue-800">
-                            <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             <span>Submitted</span>
                           </span>
                         ) : (

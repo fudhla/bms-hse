@@ -207,8 +207,8 @@ export default function FormActionHeader({
           ) : status === 'submitted' || statusLaporan === 'Submitted' ? (
             isAdmin ? (
               <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+                <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                   <span>Terkirim &bull; Menunggu Review Admin</span>
                 </span>
 
@@ -227,8 +227,8 @@ export default function FormActionHeader({
                 )}
               </div>
             ) : (
-              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300">
-                <Lock className="w-3 h-3 text-blue-700" />
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                <Lock className="w-3 h-3 text-emerald-700" />
                 <span>✓ Terkirim &amp; Menunggu Persetujuan Admin</span>
               </span>
             )

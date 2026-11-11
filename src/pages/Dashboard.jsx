@@ -421,20 +421,16 @@ export default function Dashboard({ onSelectForm }) {
 
                       const rowClass = statusLaporan === 'Revision'
                         ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
-                        : statusLaporan === 'Approved'
+                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
-                        : fStatus === 'submitted'
-                        ? 'bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100/60 text-blue-900 dark:text-blue-200'
                         : fStatus === 'draft'
                         ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-900 dark:text-amber-200'
                         : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
 
                       const iconClass = statusLaporan === 'Revision'
                         ? 'text-amber-600 dark:text-amber-400'
-                        : statusLaporan === 'Approved'
+                        : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : fStatus === 'submitted'
-                        ? 'text-blue-600 dark:text-blue-400'
                         : fStatus === 'draft'
                         ? 'text-amber-500 dark:text-amber-400'
                         : 'text-slate-400';
@@ -468,7 +464,7 @@ export default function Dashboard({ onSelectForm }) {
                                 <span>Disetujui</span>
                               </span>
                             ) : fStatus === 'submitted' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/60 px-1.5 py-0.5 rounded">
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
                                 <span>{formRecord?.last_submitted ? String(formRecord.last_submitted).split('T')[0] : 'Review'}</span>
                               </span>
