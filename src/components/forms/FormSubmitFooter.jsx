@@ -25,6 +25,7 @@ import {
 import { validateInspectionSignatures } from './DigitalSignatureSection';
 import ValidationModal, { validateInspectionFormStrict } from './ValidationModal';
 import AdminApprovalPanel from './AdminApprovalPanel';
+import { useAuth } from '../../context/AuthContext';
 
 export default function FormSubmitFooter({
   onBack,
@@ -47,6 +48,9 @@ export default function FormSubmitFooter({
   recordId,
   reportId
 }) {
+  const { user } = useAuth();
+  const effectiveIsAdmin = isAdmin || user?.role === 'admin' || user?.username === 'admin_besmindo';
+
   // Modal States
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -238,7 +242,7 @@ export default function FormSubmitFooter({
           type: 'success',
           title: statusLaporan === 'Revision' 
             ? 'Laporan Revisi Berhasil Dikirim Ulang!'
-            : isAdmin && status === 'submitted'
+            : effectiveIsAdmin && status === 'submitted'
             ? 'Pembaruan Data Berhasil Disimpan!'
             : 'Inspeksi Berhasil Disetujui & Disimpan!',
           message: statusLaporan === 'Revision'
@@ -350,10 +354,10 @@ export default function FormSubmitFooter({
       <div className="pt-6 border-t border-slate-300">
         {/* ── PANEL KEPUTUSAN ADMINISTRATOR (APPROVAL WORKFLOW) ── */}
         {/* Ditampilkan tepat di atas kotak Mode Pembaruan Data jika pengguna adalah Administrator dan form berstatus Submitted (atau sudah memiliki status review) */}
-        {isAdmin && (status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || statusLaporan === 'Revision') && (
+        {effectiveIsAdmin && (status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || statusLaporan === 'Revision') && (
           <div className="mb-4">
             <AdminApprovalPanel
-              isAdmin={isAdmin}
+              isAdmin={effectiveIsAdmin}
               statusLaporan={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
               currentStatus={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
               reportStatus={statusLaporan || (status === 'submitted' ? 'Submitted' : 'Draft')}
@@ -368,7 +372,7 @@ export default function FormSubmitFooter({
         )}
 
         {/* KASUS 1: ADMIN EDIT PADA FORM YANG SUDAH SUBMITTED */}
-        {isAdmin && status === 'submitted' ? (
+        {effectiveIsAdmin && status === 'submitted' ? (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-blue-50/70 border border-blue-300">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 shadow-xs">
@@ -568,7 +572,7 @@ export default function FormSubmitFooter({
                   <h3 className="font-extrabold text-sm text-slate-900">
                     {statusLaporan === 'Revision'
                       ? 'Kirim Ulang Laporan Revisi'
-                      : isAdmin && status === 'submitted'
+                      : effectiveIsAdmin && status === 'submitted'
                       ? 'Simpan Pembaruan Data Admin'
                       : 'Persetujuan Dokumen Inspeksi'}
                   </h3>
@@ -595,14 +599,14 @@ export default function FormSubmitFooter({
                 <p className="font-extrabold text-xs">
                   {statusLaporan === 'Revision'
                     ? 'Perhatian Pengiriman Revisi:'
-                    : isAdmin && status === 'submitted'
+                    : effectiveIsAdmin && status === 'submitted'
                     ? 'Perhatian Pembaruan Administrator:'
                     : 'Pernyataan Keabsahan Pemeriksaan:'}
                 </p>
                 <p className="text-[11px] leading-relaxed text-blue-900">
                   {statusLaporan === 'Revision'
                     ? 'Dengan mengirim ulang, laporan ini akan kembali berstatus Submitted dan menunggu peninjauan/persetujuan dari Administrator HSE.'
-                    : isAdmin && status === 'submitted'
+                    : effectiveIsAdmin && status === 'submitted'
                     ? 'Seluruh revisi pada checklist fisik dan catatan inspeksi akan langsung diperbarui ke database pusat.'
                     : 'Dengan menyetujui, formulir ini akan resmi terkunci (Submitted / Read-Only), tervalidasi dengan tanda tangan digital, dan tidak dapat diubah kembali oleh personil Rig.'}
                 </p>
@@ -772,7 +776,7 @@ export default function FormSubmitFooter({
             <h3 className="text-lg font-black text-slate-900 tracking-tight mt-3">
               {statusLaporan === 'Revision'
                 ? 'Laporan Revisi Berhasil Dikirim Ulang!'
-                : isAdmin && status === 'submitted'
+                : effectiveIsAdmin && status === 'submitted'
                 ? 'Pembaruan Data Berhasil Disimpan!'
                 : 'Inspeksi Berhasil Disetujui & Disimpan!'}
             </h3>

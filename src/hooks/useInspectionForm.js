@@ -176,21 +176,16 @@ export function useInspectionForm({
               type: 'warning',
               text: `⚠️ Perhatian: Laporan dikembalikan oleh Admin untuk direvisi. Catatan: "${rowCatatanAdmin || 'Harap periksa dan lengkapi kembali data'}"`,
             });
-          } else if (rowStatusLaporan === 'Approved') {
-            setMessage({
-              type: 'success',
-              text: `✓ Laporan resmi Disetujui (Approved) oleh Administrator. Dokumen telah tervalidasi sah.`,
-            });
-          } else if (isSub) {
+          } else if (isSub || rowStatusLaporan === 'Submitted' || rowStatusLaporan === 'Approved') {
             if (isAdmin) {
               setMessage({
                 type: 'info',
-                text: `Mode Edit Admin Aktif: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted. Anda dapat meninjau, menyetujui, mengembalikan, atau mengedit laporan.`,
+                text: `Mode Admin: Data Rig ${effectiveRigNo} (${effectiveMonth}/${effectiveYear}) berstatus Submitted (Sah). Anda dapat mengembalikannya untuk direvisi jika ditemukan ketidaksesuaian.`,
               });
             } else {
               setMessage({
                 type: 'success',
-                text: `✓ Formulir Rig ${effectiveRigNo} periode ${effectiveMonth}/${effectiveYear} telah disubmit & terkunci (Read-Only). Menunggu persetujuan Admin.`,
+                text: `✓ Formulir Rig ${effectiveRigNo} periode ${effectiveMonth}/${effectiveYear} telah disubmit & sah (Terkunci).`,
               });
             }
           } else {

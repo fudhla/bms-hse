@@ -15,7 +15,7 @@ import {
   Camera, 
   Info 
 } from 'lucide-react';
-import AdminApprovalPanel from './AdminApprovalPanel';
+import { useAuth } from '../../context/AuthContext';
 
 // Panduan Khusus per Form
 const FORM_GUIDES = {
@@ -129,6 +129,8 @@ export default function FormActionHeader({
   onReviewReport,
   submitting = false
 }) {
+  const { user } = useAuth();
+  const effectiveIsAdmin = isAdmin || user?.role === 'admin' || user?.username === 'admin_besmindo';
   const [showGuideModal, setShowGuideModal] = useState(false);
 
   // Ambil info guide berdasarkan docNo atau form type
@@ -200,7 +202,7 @@ export default function FormActionHeader({
               <span>⚠️ Perlu Revisi (Revision)</span>
             </span>
           ) : status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || isLocked ? (
-            isAdmin ? (
+            effectiveIsAdmin ? (
               <div className="flex items-center space-x-2">
                 <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
