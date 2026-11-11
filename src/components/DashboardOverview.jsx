@@ -388,15 +388,10 @@ export default function DashboardOverview({ onSelectForm }) {
                               <AlertTriangle className="w-3.5 h-3.5 text-white" />
                               <span>PERLU REVISI</span>
                             </span>
-                          ) : form?.status_laporan === 'Approved' ? (
+                          ) : (status === 'submitted' || form?.status_laporan === 'Submitted' || form?.status_laporan === 'Approved') ? (
                             <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>DISETUJUI</span>
-                            </span>
-                          ) : status === 'submitted' || form?.status_laporan === 'Submitted' ? (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>TERKIRIM</span>
+                              <span>TERKIRIM (SAH)</span>
                             </span>
                           ) : status === 'draft' ? (
                             <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/25">
@@ -431,23 +426,11 @@ export default function DashboardOverview({ onSelectForm }) {
                               "{form?.catatan_admin || 'Silakan periksa dan perbaiki data inspeksi.'}"
                             </p>
                           </div>
-                        ) : form?.status_laporan === 'Approved' ? (
+                        ) : (status === 'submitted' || form?.status_laporan === 'Submitted' || form?.status_laporan === 'Approved') ? (
                           <div className="space-y-1 text-slate-600 dark:text-slate-300">
                             <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Disetujui Admin &bull; Terkunci</span>
-                            </div>
-                            {form?.hfo_name && (
-                              <p className="truncate text-slate-400 dark:text-slate-500">
-                                Oleh: <span className="font-medium text-slate-600 dark:text-slate-300">{form.hfo_name}</span>
-                              </p>
-                            )}
-                          </div>
-                        ) : status === 'submitted' ? (
-                          <div className="space-y-1 text-slate-600 dark:text-slate-300">
-                            <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Tgl: {form?.last_submitted ? String(form.last_submitted).split('T')[0] : '-'} (Menunggu Review)</span>
+                              <span>Tgl: {form?.last_submitted ? String(form.last_submitted).split('T')[0] : '-'} (Sah / Selesai)</span>
                             </div>
                             {form?.hfo_name && (
                               <p className="truncate text-slate-400 dark:text-slate-500">
@@ -475,9 +458,7 @@ export default function DashboardOverview({ onSelectForm }) {
                       className={`w-full py-3.5 text-[13px] font-bold flex justify-center items-center gap-2 transition-all duration-300 rounded-b-2xl cursor-pointer ${
                         form?.status_laporan === 'Revision'
                           ? 'bg-orange-600 text-white group-hover:bg-orange-700 group-hover:shadow-lg dark:bg-orange-600 dark:hover:bg-orange-500'
-                          : form?.status_laporan === 'Approved'
-                          ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25'
-                          : status === 'submitted'
+                          : (status === 'submitted' || form?.status_laporan === 'Submitted' || form?.status_laporan === 'Approved')
                           ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25'
                           : status === 'draft'
                           ? 'bg-amber-100/90 text-amber-900 border-t border-amber-200/90 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 group-hover:shadow-md dark:bg-amber-500/10 dark:text-amber-400 dark:border-t dark:border-amber-500/25'
@@ -487,9 +468,7 @@ export default function DashboardOverview({ onSelectForm }) {
                       <span>
                         {form?.status_laporan === 'Revision'
                           ? 'Perbaiki Revisi'
-                          : form?.status_laporan === 'Approved'
-                          ? 'Lihat Laporan'
-                          : status === 'submitted'
+                          : (status === 'submitted' || form?.status_laporan === 'Submitted' || form?.status_laporan === 'Approved')
                           ? 'Lihat / Ekspor'
                           : status === 'draft'
                           ? 'Lanjut Isi Draft'
@@ -771,15 +750,10 @@ export default function DashboardOverview({ onSelectForm }) {
                                 <AlertTriangle className="w-3.5 h-3.5 text-white" />
                                 <span>Revisi</span>
                               </span>
-                            ) : statusLaporan === 'Approved' ? (
+                            ) : (statusLaporan === 'Approved' || fStatus === 'submitted' || statusLaporan === 'Submitted') ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
-                                <span>Disetujui</span>
-                              </span>
-                            ) : fStatus === 'submitted' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>{form?.last_submitted ? String(form.last_submitted).split('T')[0] : 'Review'}</span>
+                                <span>{form?.last_submitted ? String(form.last_submitted).split('T')[0] : 'Selesai'}</span>
                               </span>
                             ) : fStatus === 'draft' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">

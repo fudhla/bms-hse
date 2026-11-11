@@ -423,22 +423,14 @@ export default function FormSubmitFooter({
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border shadow-xs bg-gradient-to-r from-emerald-50/90 to-emerald-100/40 border-emerald-300">
             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm bg-emerald-600 shadow-emerald-600/30">
-                {statusLaporan === 'Approved' ? (
-                  <CheckCircle className="w-5 h-5 text-white" />
-                ) : (
-                  <Lock className="w-5 h-5 text-white" />
-                )}
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
                 <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
-                  {statusLaporan === 'Approved'
-                    ? 'Formulir Inspeksi Telah Disetujui (Approved)'
-                    : 'Formulir Inspeksi Telah Selesai & Terkunci'}
+                  Formulir Inspeksi Telah Selesai &amp; Sah (Terkunci)
                 </h4>
                 <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                  {statusLaporan === 'Approved'
-                    ? 'Laporan telah resmi disetujui oleh Administrator HSE. Dokumen terkunci permanen.'
-                    : 'Data telah resmi tersimpan di database (read-only) & menunggu verifikasi Admin HSE.'}
+                  Dokumen telah resmi disahkan ke dalam sistem HSE PT. Besmindo Materi Sewatama dan tersimpan aman di database.
                 </p>
               </div>
             </div>

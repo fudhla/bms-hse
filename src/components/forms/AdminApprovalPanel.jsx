@@ -113,36 +113,24 @@ export default function AdminApprovalPanel({
     }
   };
 
-  const handleQuickApprove = async () => {
-    if (window.confirm('Apakah Anda yakin ingin MENYETUJUI (Approve) laporan inspeksi ini? Dokumen akan ditandai sah.')) {
-      await executeReview('Approved', '');
-    }
-  };
-
   return (
     <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-      currentStatus === 'Approved'
-        ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
-        : currentStatus === 'Revision'
+      currentStatus === 'Revision'
         ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-300 dark:border-orange-800'
-        : 'bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-slate-50 border-blue-200 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
+        : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
     } shadow-xs ${className}`}>
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Deskripsi Status & Info */}
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-xs ${
-            currentStatus === 'Approved'
-              ? 'bg-emerald-600'
-              : currentStatus === 'Revision'
+            currentStatus === 'Revision'
               ? 'bg-orange-600'
-              : 'bg-blue-600'
+              : 'bg-emerald-600'
           }`}>
-            {currentStatus === 'Approved' ? (
-              <CheckCircle2 className="w-5 h-5" />
-            ) : currentStatus === 'Revision' ? (
+            {currentStatus === 'Revision' ? (
               <RotateCcw className="w-5 h-5" />
             ) : (
-              <ShieldAlert className="w-5 h-5" />
+              <CheckCircle2 className="w-5 h-5" />
             )}
           </div>
 
@@ -152,22 +140,18 @@ export default function AdminApprovalPanel({
                 Panel Keputusan Administrator
               </h4>
               <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
-                currentStatus === 'Approved'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300'
-                  : currentStatus === 'Revision'
-                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/60 dark:text-orange-300 border border-orange-300'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-300'
+                currentStatus === 'Revision'
+                  ? 'bg-orange-500 text-white border border-orange-600 shadow-xs animate-pulse'
+                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300'
               }`}>
-                {currentStatus === 'Submitted' ? 'Submitted (Menunggu Pengecekan)' : currentStatus}
+                {currentStatus === 'Revision' ? 'Perlu Revisi (Revision)' : 'Submitted (Sah / Selesai)'}
               </span>
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-              {currentStatus === 'Approved'
-                ? 'Laporan ini telah disetujui resmi. Anda tetap dapat mengembalikan ke revisi jika diperlukan.'
-                : currentStatus === 'Revision'
+              {currentStatus === 'Revision'
                 ? 'Laporan sedang dalam perbaikan oleh pihak Rig di lapangan.'
-                : 'Periksa kelengkapan checklist dan bukti fisik sebelum memutuskan persetujuan dokumen ini.'}
+                : 'Laporan otomatis sah sesuai standar HSE. Jika ditemukan ketidaksesuaian data atau foto, Admin dapat mengembalikannya untuk direvisi.'}
             </p>
 
             {/* Jika ada catatan admin sebelumnya */}
@@ -183,26 +167,13 @@ export default function AdminApprovalPanel({
           </div>
         </div>
 
-        {/* 2 Tombol Aksi: Setujui (Approve) & Kembalikan / Revisi */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full md:w-auto justify-end">
-          {/* Tombol 1: Setujui (Approve) */}
-          <button
-            type="button"
-            onClick={handleQuickApprove}
-            disabled={isBusy || currentStatus === 'Approved'}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            title="Setujui laporan ini secara resmi"
-          >
-            {isBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            <span>Setujui (Approve)</span>
-          </button>
-
-          {/* Tombol 2: Kembalikan / Revisi (Return) */}
+        {/* Tombol Aksi: Kembalikan / Revisi */}
+        <div className="flex items-center justify-end w-full md:w-auto">
           <button
             type="button"
             onClick={handleOpenRevisionModal}
             disabled={isBusy}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
             title="Kembalikan laporan ke User Rig untuk direvisi"
           >
             <RotateCcw className="w-4 h-4" />

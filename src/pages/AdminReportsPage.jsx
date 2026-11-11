@@ -182,11 +182,11 @@ export default function AdminReportsPage() {
       // Filter Status
       if (selectedStatus !== 'all') {
         const itemStatusLaporan = item.status_laporan || (item.status === 'submitted' ? 'Submitted' : 'Draft');
-        if (selectedStatus === 'submitted' && item.status !== 'submitted') return false;
-        if (selectedStatus === 'draft' && item.status !== 'draft') return false;
-        if (selectedStatus === 'Approved' && itemStatusLaporan !== 'Approved') return false;
+        if (selectedStatus === 'draft' && item.status !== 'draft' && itemStatusLaporan !== 'Draft') return false;
         if (selectedStatus === 'Revision' && itemStatusLaporan !== 'Revision') return false;
-        if (selectedStatus === 'Submitted' && itemStatusLaporan !== 'Submitted') return false;
+        if (selectedStatus === 'Submitted') {
+          if (itemStatusLaporan === 'Revision' || item.status === 'draft') return false;
+        }
       }
 
       // Filter Tanggal / Bulan / Tahun
@@ -416,8 +416,7 @@ export default function AdminReportsPage() {
               className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">Semua Status</option>
-              <option value="Approved">✓ Disetujui (Approved)</option>
-              <option value="Submitted">⏳ Menunggu Review (Submitted)</option>
+              <option value="Submitted">✓ Selesai / Terkirim (Submitted)</option>
               <option value="Revision">⚠️ Perlu Revisi (Revision)</option>
               <option value="draft">Draft (Berjalan)</option>
             </select>
@@ -547,17 +546,12 @@ export default function AdminReportsPage() {
 
                       {/* Status Laporan Workflow */}
                       <td className="py-3 px-3.5">
-                        {item.status_laporan === 'Approved' ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>Approved</span>
-                          </span>
-                        ) : item.status_laporan === 'Revision' ? (
+                        {item.status_laporan === 'Revision' ? (
                           <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-bold text-white bg-orange-500 border border-orange-600 animate-pulse shadow-md">
                             <AlertTriangle className="w-3.5 h-3.5 text-white" />
                             <span>Revision</span>
                           </span>
-                        ) : isSubmitted ? (
+                        ) : isSubmitted || item.status_laporan === 'Submitted' || item.status_laporan === 'Approved' ? (
                           <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             <span>Submitted</span>

@@ -194,22 +194,17 @@ export default function FormActionHeader({
           </button>
 
           {/* ── Indikator Status Approval Workflow ── */}
-          {statusLaporan === 'Approved' ? (
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-              <span>✓ Disetujui Admin (Approved)</span>
-            </span>
-          ) : statusLaporan === 'Revision' ? (
+          {statusLaporan === 'Revision' ? (
             <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold text-white bg-orange-500 border border-orange-600 shadow-md animate-pulse">
               <AlertTriangle className="w-3.5 h-3.5 text-white" />
               <span>⚠️ Perlu Revisi (Revision)</span>
             </span>
-          ) : status === 'submitted' || statusLaporan === 'Submitted' ? (
+          ) : status === 'submitted' || statusLaporan === 'Submitted' || statusLaporan === 'Approved' || isLocked ? (
             isAdmin ? (
               <div className="flex items-center space-x-2">
                 <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Terkirim &bull; Menunggu Review Admin</span>
+                  <span>✓ Terkirim &amp; Sah (Submitted)</span>
                 </span>
 
                 {/* Indikator Auto-Save Realtime saat Admin Mengedit */}
@@ -229,14 +224,9 @@ export default function FormActionHeader({
             ) : (
               <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
                 <Lock className="w-3 h-3 text-emerald-700" />
-                <span>✓ Terkirim &amp; Menunggu Persetujuan Admin</span>
+                <span>✓ Terkirim &amp; Sah (Terkunci)</span>
               </span>
             )
-          ) : isLocked ? (
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              <Lock className="w-3 h-3 text-emerald-700" />
-              <span>✓ Terkirim &amp; Terkunci</span>
-            </span>
           ) : (
             <div className="flex items-center space-x-2">
               {/* Badge Draft */}

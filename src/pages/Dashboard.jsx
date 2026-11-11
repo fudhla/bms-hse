@@ -458,15 +458,10 @@ export default function Dashboard({ onSelectForm }) {
                                 <AlertTriangle className="w-3.5 h-3.5 text-white" />
                                 <span>Revisi</span>
                               </span>
-                            ) : statusLaporan === 'Approved' ? (
+                            ) : (statusLaporan === 'Approved' || fStatus === 'submitted' || statusLaporan === 'Submitted') ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                                 <CheckCircle2 className="w-3 h-3" />
-                                <span>Disetujui</span>
-                              </span>
-                            ) : fStatus === 'submitted' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>{formRecord?.last_submitted ? String(formRecord.last_submitted).split('T')[0] : 'Review'}</span>
+                                <span>{formRecord?.last_submitted ? String(formRecord.last_submitted).split('T')[0] : 'Selesai'}</span>
                               </span>
                             ) : fStatus === 'draft' ? (
                               <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">

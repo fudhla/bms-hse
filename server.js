@@ -2789,12 +2789,13 @@ const handleReportReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID laporan wajib disertakan' });
     }
 
-    // Normalisasi status review (case-insensitive) - Sesuai kaidah K3, laporan wajib diperbaiki (Revision), bukan ditolak (Rejected)
+    // Normalisasi status review (case-insensitive) - Sesuai kaidah K3 & Management by Exception:
+    // Submitted = otomatis sah/selesai. Admin hanya mengirim 'Revision' saat ada perbaikan.
     const validMap = {
-      'approved': 'Approved',
       'revision': 'Revision',
       'submitted': 'Submitted',
-      'draft': 'Draft'
+      'draft': 'Draft',
+      'approved': 'Submitted' // Kompatibilitas mundur: 'approved' langsung disetarakan dengan 'Submitted'
     };
     const normKey = (status_laporan || '').toLowerCase().trim();
     const finalStatus = validMap[normKey];
@@ -2802,7 +2803,7 @@ const handleReportReview = async (req, res) => {
     if (!finalStatus) {
       return res.status(400).json({ 
         success: false, 
-        message: "Status laporan tidak valid. Pilihan: 'Approved', 'Revision', 'Submitted', 'Draft'" 
+        message: "Status laporan tidak valid. Pilihan: 'Revision', 'Submitted', 'Draft'" 
       });
     }
 
@@ -2820,8 +2821,9 @@ const handleReportReview = async (req, res) => {
 
     const cleanNote = catatan_admin ? String(catatan_admin).trim() : null;
     
-    // Status sinkron: Jika 'Revision', status utama diubah jadi 'draft' agar user rig dapat mengedit kembali
-    const syncStatus = (finalStatus === 'Revision') ? 'draft' : (finalStatus === 'Approved' ? 'submitted' : check[0].status);
+    // Status sinkron: Jika 'Revision', status utama diubah jadi 'draft' agar user rig dapat mengedit kembali.
+    // Jika 'Submitted', status utama dipastikan 'submitted'.
+    const syncStatus = (finalStatus === 'Revision') ? 'draft' : 'submitted';
 
     await pool.query(`
       UPDATE inspections SET
