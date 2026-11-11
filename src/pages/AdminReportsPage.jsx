@@ -553,8 +553,8 @@ export default function AdminReportsPage() {
                             <span>Approved</span>
                           </span>
                         ) : item.status_laporan === 'Revision' ? (
-                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 animate-pulse">
-                            <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-300 border border-orange-300 dark:border-orange-800 animate-pulse shadow-xs">
+                            <AlertTriangle className="w-3 h-3 text-orange-600" />
                             <span>Revision</span>
                           </span>
                         ) : isSubmitted ? (

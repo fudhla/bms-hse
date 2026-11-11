@@ -420,7 +420,7 @@ export default function Dashboard({ onSelectForm }) {
                       const Icon = def.icon;
 
                       const rowClass = statusLaporan === 'Revision'
-                        ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
+                        ? 'bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100/70 text-orange-800 dark:text-orange-200 border border-orange-400 dark:border-orange-500 shadow-xs'
                         : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
                         : fStatus === 'draft'
@@ -428,7 +428,7 @@ export default function Dashboard({ onSelectForm }) {
                         : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
 
                       const iconClass = statusLaporan === 'Revision'
-                        ? 'text-amber-600 dark:text-amber-400'
+                        ? 'text-orange-600 dark:text-orange-400'
                         : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : fStatus === 'draft'
@@ -454,8 +454,8 @@ export default function Dashboard({ onSelectForm }) {
 
                           <div className="flex items-center space-x-1.5 flex-shrink-0">
                             {statusLaporan === 'Revision' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-black text-amber-800 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-300 animate-pulse">
-                                <AlertTriangle className="w-3 h-3 text-amber-700" />
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/60 px-2 py-0.5 rounded-full border border-orange-300 dark:border-orange-600 animate-pulse shadow-xs">
+                                <AlertTriangle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
                                 <span>Revisi</span>
                               </span>
                             ) : statusLaporan === 'Approved' ? (

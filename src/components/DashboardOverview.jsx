@@ -384,7 +384,7 @@ export default function DashboardOverview({ onSelectForm }) {
 
                           {/* Status Badge — Workflow Aware */}
                           {form?.status_laporan === 'Revision' ? (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-500 text-white border border-amber-600 shadow-xs animate-pulse">
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-orange-600 text-white border border-orange-700 shadow-xs animate-pulse">
                               <AlertTriangle className="w-3.5 h-3.5 text-white" />
                               <span>PERLU REVISI</span>
                             </span>
@@ -422,9 +422,9 @@ export default function DashboardOverview({ onSelectForm }) {
                       {/* Info Pengisian Metadata */}
                       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
                         {form?.status_laporan === 'Revision' ? (
-                          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200">
-                            <div className="flex items-center space-x-1 font-bold text-[10.5px] text-amber-800 dark:text-amber-300">
-                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                          <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/40 border border-orange-400 dark:border-orange-800/60 text-orange-900 dark:text-orange-200">
+                            <div className="flex items-center space-x-1 font-bold text-[10.5px] text-orange-800 dark:text-orange-300">
+                              <AlertTriangle className="w-3.5 h-3.5 text-orange-600 flex-shrink-0" />
                               <span>Catatan Admin:</span>
                             </div>
                             <p className="text-[10px] mt-0.5 line-clamp-2 italic text-slate-700 dark:text-slate-300">
@@ -474,7 +474,7 @@ export default function DashboardOverview({ onSelectForm }) {
                       onClick={() => onSelectForm({ formKey: form?.form_id, rigName: userRigName, month: selectedMonth, year: selectedYear })}
                       className={`w-full py-3.5 text-[13px] font-bold flex justify-center items-center gap-2 transition-all duration-300 rounded-b-2xl cursor-pointer ${
                         form?.status_laporan === 'Revision'
-                          ? 'bg-amber-500 text-white group-hover:bg-amber-600 group-hover:shadow-lg dark:bg-amber-600 dark:hover:bg-amber-500'
+                          ? 'bg-orange-600 text-white group-hover:bg-orange-700 group-hover:shadow-lg dark:bg-orange-600 dark:hover:bg-orange-500'
                           : form?.status_laporan === 'Approved'
                           ? 'bg-emerald-100/90 text-emerald-800 border-t border-emerald-200/90 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 group-hover:shadow-md dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-t dark:border-emerald-500/25 dark:group-hover:bg-emerald-500/25'
                           : status === 'submitted'
@@ -740,14 +740,14 @@ export default function DashboardOverview({ onSelectForm }) {
                       const fStatus = form?.status || (form?.is_filled ? 'submitted' : (form?.is_draft ? 'draft' : 'not_started'));
                       const statusLaporan = form?.status_laporan || (fStatus === 'submitted' ? 'Submitted' : 'Draft');
                       const rowClass = statusLaporan === 'Revision'
-                        ? 'bg-amber-100/60 dark:bg-amber-950/40 hover:bg-amber-200/60 text-amber-950 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60'
+                        ? 'bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100/70 text-orange-800 dark:text-orange-200 border border-orange-400 dark:border-orange-500 shadow-xs'
                         : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 text-emerald-900 dark:text-emerald-200'
                         : fStatus === 'draft'
                         ? 'bg-amber-50/50 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-900 dark:text-amber-200'
                         : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400';
                       const iconClass = statusLaporan === 'Revision'
-                        ? 'text-amber-600 dark:text-amber-400'
+                        ? 'text-orange-600 dark:text-orange-400'
                         : (statusLaporan === 'Approved' || fStatus === 'submitted')
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : fStatus === 'draft'
@@ -767,8 +767,8 @@ export default function DashboardOverview({ onSelectForm }) {
 
                           <div className="flex items-center space-x-1.5 flex-shrink-0">
                             {statusLaporan === 'Revision' ? (
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-black text-amber-800 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-300 animate-pulse">
-                                <AlertTriangle className="w-3 h-3 text-amber-700" />
+                              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/60 px-2 py-0.5 rounded-full border border-orange-300 dark:border-orange-600 animate-pulse shadow-xs">
+                                <AlertTriangle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
                                 <span>Revisi</span>
                               </span>
                             ) : statusLaporan === 'Approved' ? (

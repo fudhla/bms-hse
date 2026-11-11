@@ -483,7 +483,7 @@ export default function FormSubmitFooter({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Auto-save indicator */}
             <div className="text-xs text-slate-600 font-medium flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full ${statusLaporan === 'Revision' ? 'bg-amber-500' : 'bg-amber-500'} animate-pulse flex-shrink-0`}></span>
+              <span className={`w-2 h-2 rounded-full ${statusLaporan === 'Revision' ? 'bg-orange-500' : 'bg-amber-500'} animate-pulse flex-shrink-0`}></span>
               <span>
                 {statusLaporan === 'Revision' ? (
                   <>Perbaikan data formulir siap. Klik <strong>Kirim Ulang Laporan</strong> untuk mengirim kembali ke Admin.</>
@@ -533,7 +533,7 @@ export default function FormSubmitFooter({
                 disabled={submitting}
                 className={`group relative inline-flex items-center gap-2 px-5 py-2 rounded-xl text-white font-bold text-xs shadow-xs hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer disabled:opacity-50 overflow-hidden whitespace-nowrap flex-shrink-0 ${
                   statusLaporan === 'Revision'
-                    ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                    ? 'bg-orange-600 hover:bg-orange-700 active:bg-orange-800'
                     : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
                 }`}
               >
@@ -699,7 +699,7 @@ export default function FormSubmitFooter({
                     onClick={executeApproval}
                     className={`w-full py-3 rounded-2xl text-white font-extrabold text-xs transition shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 ${
                       statusLaporan === 'Revision'
-                        ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/30'
+                        ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-500/30'
                         : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
                     }`}
                   >

@@ -124,7 +124,7 @@ export default function AdminApprovalPanel({
       currentStatus === 'Approved'
         ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
         : currentStatus === 'Revision'
-        ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800'
+        ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-300 dark:border-orange-800'
         : 'bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-slate-50 border-blue-200 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
     } shadow-xs ${className}`}>
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -134,7 +134,7 @@ export default function AdminApprovalPanel({
             currentStatus === 'Approved'
               ? 'bg-emerald-600'
               : currentStatus === 'Revision'
-              ? 'bg-amber-500'
+              ? 'bg-orange-600'
               : 'bg-blue-600'
           }`}>
             {currentStatus === 'Approved' ? (
@@ -155,7 +155,7 @@ export default function AdminApprovalPanel({
                 currentStatus === 'Approved'
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300'
                   : currentStatus === 'Revision'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-300'
+                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/60 dark:text-orange-300 border border-orange-300'
                   : 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-300'
               }`}>
                 {currentStatus === 'Submitted' ? 'Submitted (Menunggu Pengecekan)' : currentStatus}
@@ -172,10 +172,10 @@ export default function AdminApprovalPanel({
 
             {/* Jika ada catatan admin sebelumnya */}
             {effectiveCatatan && (
-              <div className="mt-2 text-xs p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2">
-                <MessageSquare className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="mt-2 text-xs p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-orange-200 dark:border-orange-800/60 flex items-start gap-2">
+                <MessageSquare className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <span className="font-bold text-amber-700 dark:text-amber-400">Catatan Admin Aktif:</span>
+                  <span className="font-bold text-orange-700 dark:text-orange-400">Catatan Admin Aktif:</span>
                   <span className="italic ml-1 text-slate-800 dark:text-slate-200 font-medium">"{effectiveCatatan}"</span>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export default function AdminApprovalPanel({
             type="button"
             onClick={handleOpenRevisionModal}
             disabled={isBusy}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
             title="Kembalikan laporan ke User Rig untuk direvisi"
           >
             <RotateCcw className="w-4 h-4" />
@@ -222,9 +222,9 @@ export default function AdminApprovalPanel({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Modal */}
-            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-amber-50 dark:bg-amber-950/40">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-orange-50 dark:bg-orange-950/40">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-amber-500">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-orange-600">
                   <RotateCcw className="w-5 h-5" />
                 </div>
                 <div>
@@ -259,7 +259,7 @@ export default function AdminApprovalPanel({
                     if (modalError) setModalError('');
                   }}
                   placeholder="Contoh: Foto APAR buram, tolong foto ulang. Periksa juga segel pengaman pada unit nomor 03."
-                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all resize-none font-sans"
+                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all resize-none font-sans"
                   autoFocus
                 />
                 {modalError && (
@@ -270,8 +270,8 @@ export default function AdminApprovalPanel({
                 )}
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 text-[11px] text-orange-800 dark:text-orange-300 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                 <span>
                   Setelah catatan dikirim, status laporan akan berubah menjadi <strong>"Revision"</strong> dan kunci formulir di sisi Rig akan otomatis terbuka agar mereka dapat memperbaiki data dan mengirim ulang.
                 </span>
@@ -293,7 +293,7 @@ export default function AdminApprovalPanel({
                 type="button"
                 onClick={handleConfirmRevision}
                 disabled={isBusy}
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-bold text-xs transition shadow-sm cursor-pointer disabled:opacity-50 bg-amber-600 hover:bg-amber-700"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-white font-bold text-xs transition shadow-sm cursor-pointer disabled:opacity-50 bg-orange-600 hover:bg-orange-700 active:bg-orange-800"
               >
                 {isBusy ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

@@ -143,24 +143,24 @@ export default function FormActionHeader({
     <>
       {/* ── BANNER PERINGATAN REVISI DARI ADMIN (JIKA STATUS = REVISION) ── */}
       {statusLaporan === 'Revision' && (
-        <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 text-amber-950 shadow-sm animate-in fade-in duration-200">
+        <div className="mb-4 p-4 rounded-2xl bg-orange-50 border-2 border-orange-400 text-orange-950 shadow-sm animate-in fade-in duration-200">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-amber-500 text-white flex-shrink-0 shadow-xs animate-pulse">
+            <div className="p-2 rounded-xl bg-orange-600 text-white flex-shrink-0 shadow-xs animate-pulse">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="font-extrabold text-xs sm:text-sm text-amber-950 tracking-wide uppercase">
+                <span className="font-extrabold text-xs sm:text-sm text-orange-950 tracking-wide uppercase">
                   Perlu Revisi dari Rig
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-300">
                   Catatan Administrator HSE
                 </span>
               </div>
-              <div className="text-xs sm:text-sm text-slate-800 whitespace-pre-wrap font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-amber-200 shadow-2xs mt-1.5">
+              <div className="text-xs sm:text-sm text-slate-800 whitespace-pre-wrap font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-orange-200 shadow-2xs mt-1.5">
                 {catatanAdmin || 'Mohon periksa kembali data checklist formulir ini dan lengkapi bagian yang belum sesuai.'}
               </div>
-              <p className="text-[11px] text-amber-900 mt-2 font-semibold flex items-center gap-1.5">
+              <p className="text-[11px] text-orange-900 mt-2 font-semibold flex items-center gap-1.5">
                 <span>ℹ️</span>
                 Formulir telah dibuka kembali untuk diedit. Setelah selesai memperbaiki, silakan klik tombol <strong>"Kirim Ulang Laporan"</strong> di bagian bawah halaman.
               </p>
@@ -200,8 +200,8 @@ export default function FormActionHeader({
               <span>✓ Disetujui Admin (Approved)</span>
             </span>
           ) : statusLaporan === 'Revision' ? (
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs animate-pulse">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 shadow-xs animate-pulse">
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
               <span>⚠️ Perlu Revisi (Revision)</span>
             </span>
           ) : status === 'submitted' || statusLaporan === 'Submitted' ? (
